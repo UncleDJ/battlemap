@@ -1,0 +1,3555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<title>BattleMap — Tabletop RPG</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#c9a84c;--gold-dim:#c9a84c33;--gold-bright:#e0c060;
+  --bg-deep:#0d0d18;--bg-panel:#16192e;--bg-card:#1c2040;
+  --border:#2a2d4a;--border-gold:#c9a84c55;
+  --text:#e8e0d0;--text-muted:#8a8090;
+  --red:#c94c4c;--green:#4cb87c;--blue:#4c7ec9;
+}
+body{font-family:'Crimson Text',Georgia,serif;background:var(--bg-deep);color:var(--text);height:100vh;height:100dvh;overflow-y:auto;display:flex;flex-direction:column;width:100%;}
+body.in-app{overflow:hidden;position:fixed;}
+
+/* LOGIN */
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;position:relative;overflow:hidden}
+#login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,#c9a84c18 0%,transparent 70%),repeating-linear-gradient(0deg,transparent,transparent 59px,#c9a84c08 59px,#c9a84c08 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,#c9a84c08 59px,#c9a84c08 60px);pointer-events:none}
+.login-crest{font-family:'Cinzel',serif;font-size:48px;color:var(--gold);letter-spacing:6px;margin-bottom:6px;animation:glow 3s ease-in-out infinite alternate}
+@keyframes glow{from{text-shadow:0 0 20px #c9a84c44}to{text-shadow:0 0 60px #c9a84caa,0 0 100px #c9a84c44}}
+.login-sub{font-family:'Cinzel',serif;font-size:11px;letter-spacing:5px;color:var(--text-muted);margin-bottom:40px;text-transform:uppercase}
+.login-box{background:var(--bg-panel);border:1px solid var(--border-gold);border-radius:4px;padding:32px;width:360px;display:flex;flex-direction:column;gap:16px}
+.fl{font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:var(--text-muted);text-transform:uppercase;margin-bottom:-8px}
+.fi{background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:10px 14px;font-family:'Crimson Text',serif;font-size:16px;outline:none;width:100%;transition:border-color .2s}
+.fi:focus{border-color:var(--gold)}
+.role-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.role-btn{padding:12px 6px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-muted);font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;cursor:pointer;text-align:center;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:6px}
+.role-btn .ri{font-size:22px}
+.role-btn:hover{border-color:var(--gold);color:var(--gold)}
+.role-btn.sel{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
+.enter-btn{padding:14px;background:linear-gradient(135deg,#a8892c,#c9a84c,#a8892c);border:none;border-radius:3px;color:#0d0d18;font-family:'Cinzel',serif;font-size:13px;font-weight:600;letter-spacing:3px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.enter-btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+
+/* APP */
+#app{display:none;flex-direction:column;height:100vh;height:100dvh}
+#toolbar{background:var(--bg-panel);border-bottom:1px solid var(--border-gold);padding:0 8px;display:flex;align-items:center;gap:5px;min-height:48px;flex-shrink:0;flex-wrap:wrap;overflow:visible;position:relative;z-index:10}
+.tb-brand{font-family:'Cinzel',serif;font-size:14px;font-weight:600;color:var(--gold);letter-spacing:3px;white-space:nowrap}
+.tb-sep{width:1px;height:24px;background:var(--border);flex-shrink:0}
+.tb-btn{padding:5px 10px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-muted);font-family:'Cinzel',serif;font-size:9px;letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.tb-btn:hover{border-color:var(--gold);color:var(--gold)}
+.tb-btn.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
+.tb-btn.danger:hover{border-color:var(--red);color:var(--red)}
+.tb-btn.terrain-btn{color:#7ab0f5;border-color:#4c7ec966}
+.tb-btn.terrain-btn:hover{border-color:#7ab0f5}
+.tb-btn.init-active{border-color:var(--green);background:#4cb87c22;color:var(--green)}
+.rbadge{padding:3px 10px;border-radius:2px;font-family:'Cinzel',serif;font-size:9px;font-weight:600;letter-spacing:2px;flex-shrink:0}
+.b-gm{background:#c9a84c22;color:var(--gold);border:1px solid var(--border-gold)}
+.b-player{background:#4c7ec922;color:#7ab0f5;border:1px solid #4c7ec966}
+.b-observer{background:#55555522;color:#888;border:1px solid #55555566}
+#tb-name{font-size:13px;color:var(--text-muted);font-style:italic;white-space:nowrap}
+.tbl{font-family:'Cinzel',serif;font-size:9px;letter-spacing:1px;color:var(--text-muted);white-space:nowrap}
+.tbn{background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 8px;font-family:'Crimson Text',serif;font-size:14px;outline:none;width:60px}
+
+/* MAIN */
+#main{display:flex;flex:1;overflow:hidden}
+#canvas-wrap{flex:1;position:relative;overflow:hidden;background:var(--bg-deep);cursor:crosshair}
+#battlemap-canvas{position:absolute;top:0;left:0}
+.turn-banner{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:var(--gold);background:var(--bg-panel);border:1px solid var(--border-gold);border-radius:3px;padding:6px 18px;z-index:5;display:none;white-space:nowrap;pointer-events:none}
+.lock-banner{position:absolute;top:10px;right:10px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;color:var(--red);background:var(--bg-panel);border:1px solid #c94c4c55;border-radius:3px;padding:5px 12px;z-index:5;display:none;pointer-events:none}
+
+/* SIDEBAR */
+#sidebar{width:220px;background:var(--bg-panel);border-left:1px solid var(--border-gold);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width .25s ease}
+#sidebar.collapsed{width:0;border-left:none}
+#sidebar-toggle{position:absolute;top:50%;right:0;transform:translateY(-50%) translateX(100%);background:var(--bg-panel);border:1px solid var(--border-gold);border-left:none;border-radius:0 4px 4px 0;color:var(--gold);font-size:12px;padding:8px 5px;cursor:pointer;z-index:20;writing-mode:horizontal-tb;line-height:1}
+#canvas-wrap{position:relative}
+
+/* INITIATIVE PANEL */
+#init-panel{flex-shrink:0;border-bottom:2px solid var(--border-gold)}
+#init-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 6px;background:var(--bg-card)}
+.init-title{font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:var(--gold)}
+.init-active-badge{font-family:'Cinzel',serif;font-size:8px;padding:2px 7px;border-radius:2px;background:#4cb87c22;color:var(--green);border:1px solid #4cb87c55;display:none}
+#init-list{max-height:250px;overflow-y:auto}
+.irow{display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid var(--border);transition:background .15s;position:relative}
+.irow.cur{background:linear-gradient(90deg,#c9a84c1a,transparent);border-left:3px solid var(--gold)}
+.irow.cur .iname{color:var(--gold)}
+.iav{width:22px;height:22px;border-radius:50%;flex-shrink:0;border:1.5px solid #fff3;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
+.iscore{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--gold);width:22px;text-align:center;flex-shrink:0}
+.iname{font-size:13px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iturn{font-family:'Cinzel',serif;font-size:8px;color:var(--gold);letter-spacing:1px;white-space:nowrap;flex-shrink:0}
+.iedit,.idel{background:none;border:none;cursor:pointer;padding:2px 3px;opacity:0;transition:opacity .15s;flex-shrink:0}
+.irow:hover .iedit,.irow:hover .idel{opacity:1}
+.iedit{color:var(--text-muted);font-size:12px}
+.idel{color:var(--red);font-size:11px}
+#init-empty{padding:14px 12px;font-size:12px;color:var(--text-muted);text-align:center;font-style:italic}
+#init-footer{display:flex;gap:5px;padding:7px 8px;background:var(--bg-card);flex-shrink:0;display:none}
+.icbtn{flex:1;padding:5px 4px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-muted);font-family:'Cinzel',serif;font-size:8px;letter-spacing:1px;cursor:pointer;text-align:center;transition:all .15s}
+.icbtn:hover{border-color:var(--gold);color:var(--gold)}
+.icbtn.next{border-color:var(--green);color:var(--green)}
+.icbtn.next:hover{background:#4cb87c22}
+.icbtn.end:hover{border-color:var(--red);color:var(--red)}
+
+/* TOKEN LIST */
+.stitle{font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:var(--text-muted);padding:10px 12px 8px;text-transform:uppercase;border-bottom:1px solid var(--border);flex-shrink:0}
+#token-list{flex:1;overflow-y:auto}
+.tok-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.tok-item:hover{background:var(--bg-card)}
+.tok-av{width:26px;height:26px;flex-shrink:0;border:1.5px solid #fff3;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;overflow:hidden}
+.tok-inf{flex:1;min-width:0}
+.tok-n{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tok-o{font-size:10px;color:var(--text-muted);font-style:italic}
+.tok-del{color:var(--red);font-size:13px;background:none;border:none;cursor:pointer;opacity:0;transition:opacity .15s;padding:2px 4px;flex-shrink:0}
+.tok-item:hover .tok-del{opacity:1}
+.tbadge{font-family:'Cinzel',serif;font-size:7px;color:#7ab0f5;background:#4c7ec922;border:1px solid #4c7ec944;border-radius:2px;padding:1px 4px}
+.tbadge-monster{font-family:'Cinzel',serif;font-size:7px;color:#c94c4c;background:#c94c4c22;border:1px solid #c94c4c44;border-radius:2px;padding:1px 4px}
+.tb-btn.monster-btn{color:#c97b4c;border-color:#c97b4c66}
+.tb-btn.monster-btn:hover{border-color:#c97b4c;color:#e09060}
+
+#status-bar{background:var(--bg-deep);border-top:1px solid var(--border);padding:3px 12px;font-family:'Cinzel',serif;font-size:9px;letter-spacing:1px;color:var(--text-muted);display:flex;gap:16px;align-items:center;flex-shrink:0}
+
+/* CONTEXT MENU */
+.ctx-menu{position:fixed;background:var(--bg-card);border:1px solid var(--border-gold);border-radius:4px;padding:4px;z-index:1000;min-width:160px;box-shadow:0 8px 32px #00000088;display:none}
+.ctx-item{padding:8px 14px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;color:var(--text);cursor:pointer;border-radius:3px;transition:background .1s}
+.ctx-item:hover{background:var(--bg-panel);color:var(--gold)}
+.ctx-item.danger{color:var(--red)}
+.ctx-item.danger:hover{background:#3a101022}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:#000b;z-index:2000;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--bg-panel);border:1px solid var(--border-gold);border-radius:4px;padding:28px;width:380px;max-width:96vw;display:flex;flex-direction:column;gap:14px;box-shadow:0 16px 64px #00000099;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:'Cinzel',serif;font-size:16px;color:var(--gold);letter-spacing:2px}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.modal-btns button{padding:8px 18px;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;cursor:pointer;transition:all .15s}
+.modal-btns button:hover{border-color:var(--gold);color:var(--gold)}
+.modal-btns button.primary{background:var(--gold);border-color:var(--gold);color:#0d0d18;font-weight:600}
+.mlabel{font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase}
+input[type=color]{width:40px;height:34px;border:1px solid var(--border);border-radius:3px;cursor:pointer;background:none;padding:2px}
+.cp-row{display:flex;gap:6px;flex-wrap:wrap}
+.cp{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .15s}
+.cp:hover{transform:scale(1.15)}
+.cp.s{border-color:#fff}
+.chk-row{display:flex;align-items:center;gap:10px;padding:2px 0}
+.chk-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold);cursor:pointer}
+.chk-row label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;color:var(--text-muted);cursor:pointer}
+
+/* INITIATIVE TABLE in modal */
+.init-tbl{width:100%;border-collapse:collapse}
+.init-tbl th{font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;color:var(--text-muted);padding:4px 8px;text-align:left;border-bottom:1px solid var(--border)}
+.init-tbl td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+.init-tbl input[type=number]{background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 8px;font-family:'Crimson Text',serif;font-size:15px;width:70px;outline:none;text-align:center}
+.init-tbl input[type=number]:focus{border-color:var(--gold)}
+.init-tbl input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold);cursor:pointer}
+.tok-dot{width:16px;height:16px;border-radius:50%;display:inline-block;flex-shrink:0}
+
+.empty-msg{padding:16px 12px;font-size:12px;color:var(--text-muted);text-align:center;font-style:italic}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg-deep)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+input[type=file]{display:none}
+
+/* SCENE MANAGER PANEL */
+#scene-panel{flex-shrink:0;border-bottom:2px solid var(--border-gold)}
+#scene-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 6px;background:var(--bg-card)}
+.scene-title{font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:var(--gold)}
+#scene-list{max-height:180px;overflow-y:auto}
+.srow{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.srow:hover{background:var(--bg-card)}
+.srow.active-scene{background:linear-gradient(90deg,#c9a84c1a,transparent);border-left:3px solid var(--gold)}
+.srow-name{flex:1;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow-live{font-family:'Cinzel',serif;font-size:7px;color:var(--green);border:1px solid #4cb87c55;border-radius:2px;padding:1px 5px;white-space:nowrap}
+.srow-btns{display:flex;gap:3px;flex-shrink:0}
+.srow-btn{background:none;border:1px solid var(--border);border-radius:3px;color:var(--text-muted);font-size:9px;padding:2px 6px;cursor:pointer;white-space:nowrap;font-family:'Cinzel',serif;letter-spacing:1px}
+.srow-btn:hover{border-color:var(--gold);color:var(--gold)}
+.srow-btn.go{border-color:var(--green);color:var(--green)}
+.srow-btn.go:hover{background:#4cb87c22}
+.srow-btn.del:hover{border-color:var(--red);color:var(--red)}
+#scene-add{display:flex;gap:6px;padding:8px;background:var(--bg-card);flex-shrink:0}
+.scene-add-input{flex:1;background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 8px;font-family:'Crimson Text',serif;font-size:13px;outline:none}
+.scene-add-input:focus{border-color:var(--gold)}
+.scene-add-btn{padding:4px 10px;border:1px solid var(--border-gold);border-radius:3px;background:transparent;color:var(--gold);font-family:'Cinzel',serif;font-size:9px;cursor:pointer;white-space:nowrap}
+.scene-add-btn:hover{background:var(--gold-dim)}
+/* FOG TOOL indicator */
+.tb-btn.fog-paint{border-color:#6655aa;color:#aa99ee}
+.tb-btn.fog-paint.active{border-color:#aa99ee;background:#6655aa33;color:#ccbbff}
+.tb-btn.fog-erase{border-color:#55aa77;color:#88ddaa}
+.tb-btn.fog-erase.active{border-color:#88ddaa;background:#55aa7733;color:#aaffcc}
+#fog-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#ccbbff;background:#0d0d18cc;border:1px solid #6655aa88;border-radius:3px;padding:5px 14px;z-index:5;display:none;pointer-events:none;white-space:nowrap}
+
+/* CHAT — new system */
+/* Shared message bubble styles */
+.cmsg{font-size:12px;line-height:1.5;padding:5px 9px;border-radius:6px;word-break:break-word;max-width:92%}
+.cmsg.theirs{background:var(--bg-card);color:var(--text);align-self:flex-start}
+.cmsg.mine{background:#1a2a3a;color:#aaccff;align-self:flex-end;text-align:right}
+.cmsg .cm-who{font-family:'Cinzel',serif;font-size:8px;color:var(--text-muted);display:block;margin-bottom:2px}
+/* Chat input row shared style */
+.chat-input-row{display:flex;gap:4px;padding:6px 8px;border-top:1px solid var(--border);flex-shrink:0;align-items:center}
+.chat-inp{flex:1;min-width:0;background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:6px 8px;font-family:'Crimson Text',serif;font-size:13px;outline:none}
+.chat-inp:focus{border-color:var(--gold)}
+.chat-send{padding:6px 10px;border:1px solid var(--border-gold);border-radius:3px;background:transparent;color:var(--gold);font-family:'Cinzel',serif;font-size:9px;cursor:pointer;flex-shrink:0;white-space:nowrap}
+.chat-send:hover{background:var(--gold-dim)}
+.chat-msgs-wrap{flex:1;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:4px}
+
+/* GM chat panel — tabs + DM list */
+#gm-chat{flex-shrink:0;border-top:2px solid var(--border-gold);display:flex;flex-direction:column;max-height:280px}
+#gm-chat-tabs{display:flex;flex-shrink:0;border-bottom:1px solid var(--border)}
+.gm-tab{flex:1;padding:5px 4px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:'Cinzel',serif;font-size:8px;letter-spacing:1px;cursor:pointer;transition:all .15s;position:relative}
+.gm-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.gm-tab .tab-badge{position:absolute;top:2px;right:4px;background:var(--red);color:#fff;border-radius:8px;padding:0 4px;font-size:7px;display:none}
+/* DM player list */
+#dm-player-list{flex:1;overflow-y:auto}
+.dm-player-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.dm-player-row:hover{background:var(--bg-card)}
+.dm-player-av{width:26px;height:26px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:10px;color:var(--gold);flex-shrink:0}
+.dm-player-name{flex:1;font-size:13px;color:var(--text)}
+.dm-player-badge{background:var(--red);color:#fff;border-radius:8px;padding:1px 6px;font-size:9px;display:none}
+/* DM conversation bubble */
+#main{position:relative}
+#dm-convo{position:absolute;bottom:0;right:220px;width:240px;background:var(--bg-panel);border:1px solid var(--border-gold);border-radius:6px 6px 0 0;display:none;flex-direction:column;max-height:320px;z-index:30;box-shadow:-4px 0 20px #00000066}
+#dm-convo-header{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--bg-card);border-radius:6px 6px 0 0;flex-shrink:0}
+#dm-convo-name{font-family:'Cinzel',serif;font-size:10px;color:var(--gold);letter-spacing:1px}
+#dm-convo-close{background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;line-height:1;padding:0 2px}
+#dm-convo-close:hover{color:var(--red)}
+#dm-convo-msgs{flex:1;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:4px;min-height:120px}
+
+/* Player chat panel */
+#player-chat{flex-shrink:0;border-top:2px solid var(--border-gold);display:flex;flex-direction:column;max-height:240px}
+#player-chat-tabs{display:flex;flex-shrink:0;border-bottom:1px solid var(--border)}
+.player-tab{flex:1;padding:5px 4px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:'Cinzel',serif;font-size:8px;letter-spacing:1px;cursor:pointer;transition:all .15s;position:relative}
+.player-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.player-tab .tab-badge{position:absolute;top:2px;right:4px;background:var(--red);color:#fff;border-radius:8px;padding:0 4px;font-size:7px;display:none}
+#player-chat-body{flex:1;display:flex;flex-direction:column;overflow:hidden}
+/* PING */
+.ping-ring{position:absolute;border-radius:50%;pointer-events:none;z-index:50;border:3px solid var(--gold);animation:ping-out 1.8s ease-out forwards}
+@keyframes ping-out{0%{width:0;height:0;opacity:1;margin:0}100%{width:80px;height:80px;opacity:0;margin:-40px}}
+/* MEASUREMENT */
+#measure-info{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:#aaffcc;background:#0d1a0dcc;border:1px solid #4cb87c88;border-radius:3px;padding:5px 14px;z-index:6;display:none;pointer-events:none;white-space:nowrap}
+/* DRAW TOOL */
+.tb-btn.draw-btn{color:#ffaa44;border-color:#ffaa4466}
+.tb-btn.draw-btn.active{border-color:#ffaa44;background:#ffaa4422;color:#ffcc88}
+/* STATUS EFFECTS on tokens - rendered on canvas, no separate CSS needed */
+/* TURN TIMER */
+#turn-timer{position:absolute;top:44px;left:50%;transform:translateX(-50%);font-family:'Cinzel',serif;font-size:20px;letter-spacing:3px;color:var(--gold);background:var(--bg-panel);border:1px solid var(--border-gold);border-radius:3px;padding:4px 20px;z-index:5;display:none;pointer-events:none;min-width:80px;text-align:center}
+#turn-timer.urgent{color:var(--red);border-color:var(--red);animation:pulse-red 0.5s ease-in-out infinite alternate}
+@keyframes pulse-red{from{opacity:1}to{opacity:0.5}}
+
+/* WEATHER */
+#weather-canvas{position:absolute;top:0;left:0;pointer-events:none;z-index:8}
+/* ACTIVE PLAYERS PANEL */
+#players-panel{flex-shrink:0;border-bottom:1px solid var(--border)}
+#players-header{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--bg-card)}
+.players-title{font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:var(--gold)}
+#players-list{overflow-y:auto;max-height:160px}
+.player-row{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--border);font-size:12px}
+.player-av{width:22px;height:22px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:9px;color:var(--gold);flex-shrink:0}
+.player-name{flex:1;color:var(--text)}
+.player-role-badge{font-family:'Cinzel',serif;font-size:7px;padding:1px 5px;border-radius:2px;flex-shrink:0}
+/* JOIN NOTIFICATION */
+#join-toast{position:absolute;top:60px;left:50%;transform:translateX(-50%);background:var(--bg-panel);border:1px solid var(--border-gold);border-radius:4px;padding:8px 18px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:var(--gold);z-index:40;display:none;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px #00000066}
+/* CONDITION TRACKER */
+#condition-panel{flex-shrink:0;border-bottom:1px solid var(--border)}
+#condition-header{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--bg-card);cursor:pointer}
+.condition-title{font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:var(--gold)}
+#condition-list{max-height:140px;overflow-y:auto;display:none}
+.cond-row{display:flex;align-items:flex-start;gap:6px;padding:5px 10px;border-bottom:1px solid var(--border);font-size:11px}
+.cond-tok{font-family:'Cinzel',serif;font-size:9px;color:var(--gold);min-width:60px;flex-shrink:0}
+.cond-statuses{flex:1;display:flex;flex-wrap:wrap;gap:3px}
+.cond-status{background:var(--bg-card);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:10px}
+/* MAP NOTES */
+.map-note-marker{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--gold);color:#0d0d18;font-family:'Cinzel',serif;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:15;transform:translate(-50%,-50%);border:2px solid #fff5;box-shadow:0 2px 8px #00000066;user-select:none}
+/* SCENE THUMBNAILS */
+.srow-thumb{width:40px;height:28px;object-fit:cover;border-radius:2px;border:1px solid var(--border);flex-shrink:0;background:var(--bg-deep)}
+/* HIDDEN TOKEN overlay on GM side */
+.tok-hidden-badge{font-size:9px;color:#ff8844;margin-left:2px}
+/* WEATHER SELECT */
+#weather-select{background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:3px 6px;font-family:'Crimson Text',serif;font-size:13px;outline:none;cursor:pointer}
+#weather-select:focus{border-color:var(--gold)}
+/* Rotation mode cursor */
+#canvas-wrap.rotating-mode,#canvas-wrap.rotating-mode #battlemap-canvas{cursor:crosshair!important}
+/* Responsive / iPad fixes */
+@media (max-width: 900px){
+  .tb-brand{font-size:11px;letter-spacing:1px}
+  #tb-name{display:none}
+  .tbl{display:none}
+  .tb-sep{display:none}
+  #sidebar{width:180px}
+  #status-bar{display:none}
+}
+@media (max-width: 600px){
+  #toolbar{padding:4px 6px;gap:4px;min-height:42px}
+  .tb-btn{padding:4px 7px;font-size:8px;letter-spacing:0}
+  .tbn{width:48px;font-size:12px;padding:3px 5px}
+  #sidebar{width:160px}
+}
+/* Ensure toolbar is never clipped on any device */
+#toolbar *{max-width:none}
+/* Safe area insets for notched iPads */
+@supports(padding:max(0px)){
+  #toolbar{padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
+  #status-bar{padding-bottom:max(3px,env(safe-area-inset-bottom))}
+}
+/* AUTH SCREENS */
+#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;position:relative;overflow-y:auto;padding:20px 0}
+#auth-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,#c9a84c18 0%,transparent 70%),repeating-linear-gradient(0deg,transparent,transparent 59px,#c9a84c08 59px,#c9a84c08 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,#c9a84c08 59px,#c9a84c08 60px);pointer-events:none}
+.auth-box{background:var(--bg-panel);border:1px solid var(--border-gold);border-radius:4px;padding:32px;width:360px;max-width:94vw;display:flex;flex-direction:column;gap:14px;position:relative;z-index:1}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.auth-tab{padding:10px;background:transparent;border:none;color:var(--text-muted);font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;cursor:pointer;transition:all .2s}
+.auth-tab.active{background:var(--gold-dim);color:var(--gold);border-bottom:2px solid var(--gold)}
+.auth-err{font-size:12px;color:var(--red);font-style:italic;min-height:16px;text-align:center}
+.auth-link{font-size:12px;color:var(--text-muted);text-align:center;cursor:pointer;text-decoration:underline;font-style:italic}
+.auth-link:hover{color:var(--gold)}
+/* ROOM PICKER */
+#room-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;position:relative;overflow-y:auto;padding:20px 0}
+#room-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,#c9a84c18 0%,transparent 70%),repeating-linear-gradient(0deg,transparent,transparent 59px,#c9a84c08 59px,#c9a84c08 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,#c9a84c08 59px,#c9a84c08 60px);pointer-events:none}
+.room-box{background:var(--bg-panel);border:1px solid var(--border-gold);border-radius:4px;padding:32px;width:400px;max-width:94vw;display:flex;flex-direction:column;gap:14px;position:relative;z-index:1}
+.room-divider{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:11px;font-style:italic}
+.room-divider::before,.room-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.room-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto}
+.room-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:3px;cursor:pointer;transition:all .2s}
+.room-row:hover{border-color:var(--gold);background:var(--gold-dim)}
+.room-row-name{flex:1;font-size:14px;color:var(--text)}
+.room-row-gm{font-size:11px;color:var(--text-muted);font-style:italic}
+.room-row-code{font-family:'Cinzel',serif;font-size:10px;color:var(--text-muted);letter-spacing:2px}
+.room-row-role{font-family:'Cinzel',serif;font-size:8px;padding:2px 6px;border-radius:2px}
+.room-row.selected{border-color:var(--gold);background:var(--gold-dim)}
+/* Room row dropdown menu */
+.room-row-menu{position:relative;flex-shrink:0}
+.room-row-menu-btn{background:none;border:1px solid var(--border);border-radius:3px;color:var(--text-muted);font-size:13px;padding:3px 8px;cursor:pointer;transition:all .15s;line-height:1}
+.room-row-menu-btn:hover{border-color:var(--gold);color:var(--gold)}
+.room-row-dropdown{position:fixed;background:var(--bg-card);border:1px solid var(--border-gold);border-radius:4px;padding:4px;z-index:9999;min-width:190px;box-shadow:0 8px 24px #00000088;display:none}
+.room-row-dropdown.open{display:block}
+.room-row-dd-item{padding:8px 12px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;color:var(--text);cursor:pointer;border-radius:3px;white-space:nowrap;transition:background .1s}
+.room-row-dd-item:hover{background:var(--bg-panel);color:var(--gold)}
+.room-row-dd-item.danger{color:var(--red)}
+.room-row-dd-item.danger:hover{background:#3a101022}
+.room-row-dd-sep{height:1px;background:var(--border);margin:3px 4px}
+.user-info-bar{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-muted);padding:0 2px}
+.signout-btn{background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:1px;text-decoration:underline}
+.signout-btn:hover{color:var(--red)}
+/* Canvas-only fullscreen */
+#canvas-wrap:fullscreen,#canvas-wrap:-webkit-full-screen,#canvas-wrap:-moz-full-screen{width:100vw!important;height:100vh!important}
+#canvas-wrap:fullscreen #battlemap-canvas,#canvas-wrap:-webkit-full-screen #battlemap-canvas{position:absolute;top:0;left:0}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="login-crest">&#9876; BATTLEMAP</div>
+  <div class="login-sub">Tabletop RPG Shared Map</div>
+  <div class="auth-box">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')">SIGN IN</button>
+      <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')">CREATE ACCOUNT</button>
+    </div>
+    <!-- Sign In -->
+    <div id="auth-login">
+      <div class="fl" style="margin-bottom:8px">Email</div>
+      <input class="fi" id="auth-email" type="email" placeholder="your@email.com" autocomplete="email"/>
+      <div class="fl" style="margin-top:10px;margin-bottom:8px">Password</div>
+      <input class="fi" id="auth-pass" type="password" placeholder="Password" autocomplete="current-password"/>
+      <div class="auth-err" id="auth-err"></div>
+      <button class="enter-btn" onclick="doSignIn()">SIGN IN</button>
+    </div>
+    <!-- Register -->
+    <div id="auth-register" style="display:none">
+      <div class="fl" style="margin-bottom:8px">Display Name <span style="color:var(--text-muted);font-size:9px">(your character name)</span></div>
+      <input class="fi" id="reg-name" type="text" placeholder="Thorin Oakenshield" autocomplete="username"/>
+      <div class="fl" style="margin-top:10px;margin-bottom:8px">Email</div>
+      <input class="fi" id="reg-email" type="email" placeholder="your@email.com" autocomplete="email"/>
+      <div class="fl" style="margin-top:10px;margin-bottom:8px">Password</div>
+      <input class="fi" id="reg-pass" type="password" placeholder="Min 6 characters" autocomplete="new-password"/>
+      <div class="auth-err" id="reg-err"></div>
+      <button class="enter-btn" onclick="doRegister()">CREATE ACCOUNT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM PICKER SCREEN -->
+<div id="room-screen">
+  <div class="login-crest">&#9876; BATTLEMAP</div>
+  <div class="login-sub">Tabletop RPG Shared Map</div>
+  <div class="room-box">
+    <div class="user-info-bar">
+      <span id="room-screen-user"></span>
+      <button class="signout-btn" onclick="doSignOut()">SIGN OUT</button>
+    </div>
+
+    <!-- View toggle: List rooms | Create room -->
+    <div class="auth-tabs" style="margin-bottom:0">
+      <button class="auth-tab active" id="room-tab-join" onclick="showRoomTab('join')">JOIN A ROOM</button>
+      <button class="auth-tab" id="room-tab-create" onclick="showRoomTab('create')">CREATE ROOM</button>
+    </div>
+
+    <!-- JOIN pane: live room list -->
+    <div id="room-join-pane">
+      <div style="font-size:12px;color:var(--text-muted);font-style:italic">Select a room to join</div>
+      <div class="room-list" id="room-list-live" style="max-height:240px">
+        <div class="empty-msg" style="font-size:12px">Loading rooms...</div>
+      </div>
+      <!-- Code entry — shown after picking a room -->
+      <div id="join-code-section" style="display:none;flex-direction:column;gap:10px">
+        <div style="font-family:'Cinzel',serif;font-size:11px;color:var(--gold);letter-spacing:2px" id="join-selected-room"></div>
+        <div class="fl" style="margin-bottom:4px">Join as</div>
+        <div class="role-grid" id="join-role-grid">
+          <button class="role-btn sel" id="jr-player" onclick="selJoinRole('player',this)"><span class="ri">&#9876;</span>PLAYER</button>
+          <button class="role-btn" id="jr-obs" onclick="selJoinRole('observer',this)"><span class="ri">&#128065;</span>OBSERVER</button>
+          <button class="role-btn" id="jr-gm" onclick="selJoinRole('gm',this)"><span class="ri">&#128081;</span>GM</button>
+        </div>
+        <div id="join-code-label" class="fl" style="margin-bottom:4px">Room code</div>
+        <input class="fi" id="join-room-code" type="text" placeholder="Enter room code" autocomplete="off"/>
+        <div class="auth-err" id="room-err"></div>
+        <div style="display:flex;gap:8px">
+          <button class="enter-btn" style="flex:0;padding:14px 20px;background:var(--bg-card);color:var(--text-muted);font-size:11px" onclick="clearRoomSelection()">&#8592; BACK</button>
+          <button class="enter-btn" style="flex:1" onclick="doJoinRoom()">ENTER ROOM</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE pane -->
+    <div id="room-create-pane" style="display:none;flex-direction:column;gap:10px">
+      <div style="font-size:12px;color:var(--text-muted);font-style:italic">Create a new room — you will be the GM</div>
+      <div class="fl" style="margin-bottom:4px">Room name</div>
+      <input class="fi" id="create-room-name" type="text" placeholder="e.g. Dungeon of Doom"/>
+      <div class="fl" style="margin-bottom:4px">Player room code <span style="color:var(--text-muted);font-size:9px">(share with players)</span></div>
+      <input class="fi" id="create-room-code" type="text" placeholder="e.g. dragon99" autocomplete="off"/>
+      <div class="fl" style="margin-bottom:4px">GM code <span style="color:var(--text-muted);font-size:9px">(only share with trusted GMs)</span></div>
+      <input class="fi" id="create-gm-code" type="text" placeholder="e.g. gmdragon99" autocomplete="off"/>
+      <div class="auth-err" id="create-err"></div>
+      <button class="enter-btn" onclick="doCreateRoom()">CREATE ROOM &amp; ENTER AS GM</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div id="toolbar">
+    <span class="tb-brand">&#9876; BATTLEMAP</span>
+    <span id="role-badge" class="rbadge b-player">PLAYER</span>
+    <span id="tb-name"></span>
+    <div class="tb-sep"></div>
+    <!-- GM only controls -->
+    <span id="gm-ctrl" style="display:none;align-items:center;gap:6px;" class="role-ctrl">
+      <button class="tb-btn" id="btn-grid" onclick="toggleGrid()">GRID</button>
+      <button class="tb-btn" onclick="resetView()">RESET</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" onclick="document.getElementById('map-file').click()">UPLOAD MAP</button>
+      <button class="tb-btn danger" onclick="clearMap()">CLEAR MAP</button>
+      <button class="tb-btn" onclick="openTokModal('combat')">ADD TOKEN</button>
+      <button class="tb-btn monster-btn" onclick="openTokModal('monster')">ADD MONSTER</button>
+      <button class="tb-btn terrain-btn" onclick="openTokModal('terrain')">ADD TERRAIN</button>
+      <div class="tb-sep"></div>
+      <span class="tbl">GRID</span>
+      <input class="tbn" id="gsz-in" type="number" value="50" min="20" max="150" onchange="updateGS(this.value)"/>
+      <input type="color" id="grid-color-in" value="#c9a84c" title="Grid colour" style="width:28px;height:24px;padding:1px;border:1px solid var(--border);border-radius:3px;cursor:pointer;background:none" onchange="updateGridColor(this.value)"/>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" id="btn-init" onclick="openInitModal()">&#9876; INITIATIVE</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn fog-paint" id="btn-fog-paint" onclick="setFogTool('paint')">&#9608; FOG</button>
+      <button class="tb-btn fog-erase" id="btn-fog-erase" onclick="setFogTool('erase')">&#9617; REVEAL</button>
+      <button class="tb-btn danger" onclick="clearAllFog()">CLEAR FOG</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn draw-btn" id="btn-draw" onclick="setDrawTool('draw')">&#9998; DRAW</button>
+      <button class="tb-btn draw-btn" id="btn-draw-arrow" onclick="setDrawTool('arrow')">&#10148; ARROW</button>
+      <button class="tb-btn danger" onclick="clearDrawings()">CLEAR DRAW</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" onclick="setMeasureTool()" id="btn-measure">&#8614; MEASURE</button>
+      <button class="tb-btn" onclick="pingMap()" id="btn-ping">&#11088; PING</button>
+      <button class="tb-btn" onclick="toggleMapNoteMode()" id="btn-note">&#128204; NOTE</button>
+      <button class="tb-btn" onclick="zoomFit()">FIT</button>
+      <div class="tb-sep"></div>
+      <span class="tbl">WEATHER</span>
+      <select id="weather-select" onchange="setWeather(this.value)">
+        <option value="none">None</option>
+        <option value="rain">&#127783; Rain</option>
+        <option value="snow">&#10052; Snow</option>
+        <option value="fog">&#127787; Fog</option>
+        <option value="fire">&#128293; Embers</option>
+        <option value="darkness">&#11835; Darkness</option>
+      </select>
+    </span>
+    <!-- Player only controls -->
+    <span id="pl-ctrl" style="display:none;align-items:center;gap:6px;" class="role-ctrl">
+      <button class="tb-btn" onclick="openTokModal('player')">MY TOKEN</button>
+      <button class="tb-btn" onclick="pingMap()">&#11088; PING</button>
+      <button class="tb-btn" onclick="zoomFit()">FIT</button>
+    </span>
+    <!-- Observer only controls -->
+    <span id="obs-ctrl" style="display:none;align-items:center;gap:6px;" class="role-ctrl">
+      <button class="tb-btn" id="btn-fs" onclick="toggleFullscreen()">&#9974; FULLSCREEN</button>
+      <button class="tb-btn" onclick="zoomFit()">FIT</button>
+    </span>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:6px">
+      <span class="tbl" id="room-lbl"></span>
+      <button class="tb-btn danger" id="btn-delete-room" style="display:none" onclick="deleteCurrentRoom()">DELETE ROOM</button>
+      <button class="tb-btn danger" onclick="leaveRoom()">LEAVE</button>
+    </span>
+  </div>
+
+  <div id="main">
+    <div id="canvas-wrap">
+      <canvas id="battlemap-canvas"></canvas>
+      <canvas id="weather-canvas"></canvas>
+      <button id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9656;</button>
+      <div class="turn-banner" id="turn-banner"></div>
+      <div id="fog-hint"></div>
+      <div id="join-toast"></div>
+      <div id="turn-timer"></div>
+      <div id="measure-info"></div>
+      <div class="lock-banner" id="lock-banner">&#128274; NOT YOUR TURN</div>
+    </div>
+    <!-- DM conversation bubble -->
+    <div id="dm-convo">
+      <div id="dm-convo-header">
+        <span id="dm-convo-name"></span>
+        <button id="dm-convo-close" onclick="closeDmConvo()">&#10005;</button>
+      </div>
+      <div id="dm-convo-msgs" class="chat-msgs-wrap"></div>
+      <div class="chat-input-row">
+        <input class="chat-inp" id="dm-convo-input" type="text" placeholder="Private message..." maxlength="300"/>
+        <button class="chat-send" onclick="gmSendDm()">SEND</button>
+      </div>
+    </div>
+
+    <div id="sidebar">
+      <!-- Active Players Panel (all roles) -->
+      <div id="players-panel">
+        <div id="players-header">
+          <span class="players-title">&#9876; ADVENTURERS</span>
+        </div>
+        <div id="players-list"></div>
+      </div>
+      <!-- Condition Tracker (GM only) -->
+      <div id="condition-panel" style="display:none">
+        <div id="condition-header" onclick="toggleConditionPanel()">
+          <span class="condition-title">&#9760; CONDITIONS</span>
+          <span style="font-size:9px;color:var(--text-muted)" id="cond-toggle-icon">&#9660;</span>
+        </div>
+        <div id="condition-list"></div>
+      </div>
+      <!-- Scene Manager Panel (GM only) -->
+      <div id="scene-panel" style="display:none">
+        <div id="scene-header">
+          <span class="scene-title">&#127757; SCENES</span>
+        </div>
+        <div id="scene-list"></div>
+        <div id="scene-add">
+          <input class="scene-add-input" id="scene-name-in" type="text" placeholder="New scene name..."/>
+          <button class="scene-add-btn" onclick="createScene()">+ ADD</button>
+        </div>
+      </div>
+      <!-- Initiative Panel -->
+      <div id="init-panel">
+        <div id="init-header">
+          <span class="init-title">&#9876; INITIATIVE</span>
+          <span class="init-active-badge" id="init-badge">ACTIVE</span>
+        </div>
+        <div id="init-list"><div id="init-empty" class="empty-msg">No initiative — GM clicks &#9876; INITIATIVE</div></div>
+        <div id="init-footer">
+          <button class="icbtn next" id="btn-next" onclick="nextTurn()">&#9654; NEXT TURN</button>
+          <button class="icbtn" onclick="openInitModal()">EDIT</button>
+          <button class="icbtn end" onclick="endCombat()">END COMBAT</button>
+        </div>
+      </div>
+
+      <!-- Token list -->
+      <div class="stitle">Tokens on Map</div>
+      <div id="token-list"></div>
+      <div id="obs-note" style="display:none" class="empty-msg">Observer — view only</div>
+      <!-- GM Chat -->
+      <div id="gm-chat" style="display:none">
+        <div id="gm-chat-tabs">
+          <button class="gm-tab active" id="gm-tab-pub" onclick="gmSwitchTab('public')">&#128172; PUBLIC<span class="tab-badge" id="gm-pub-badge"></span></button>
+          <button class="gm-tab" id="gm-tab-dm" onclick="gmSwitchTab('dm')">&#128274; DM<span class="tab-badge" id="gm-dm-badge"></span></button>
+        </div>
+        <!-- Public chat -->
+        <div id="gm-public-pane" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+          <div class="chat-msgs-wrap" id="gm-pub-msgs"></div>
+          <div class="chat-input-row">
+            <input class="chat-inp" id="gm-pub-input" type="text" placeholder="Message everyone..." maxlength="300"/>
+            <button class="chat-send" onclick="gmSendPublic()">SEND</button>
+          </div>
+        </div>
+        <!-- DM list -->
+        <div id="gm-dm-pane" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+          <div id="dm-player-list"><div class="empty-msg" style="font-size:11px">No players connected yet</div></div>
+        </div>
+      </div>
+
+      <!-- Player Chat -->
+      <div id="player-chat" style="display:none">
+        <div id="player-chat-tabs">
+          <button class="player-tab active" id="pl-tab-pub" onclick="plSwitchTab('public')">&#128172; PUBLIC<span class="tab-badge" id="pl-pub-badge"></span></button>
+          <button class="player-tab" id="pl-tab-dm" onclick="plSwitchTab('dm')">&#128274; GM<span class="tab-badge" id="pl-dm-badge"></span></button>
+        </div>
+        <div id="player-chat-body">
+          <!-- Public pane -->
+          <div id="pl-public-pane" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+            <div class="chat-msgs-wrap" id="pl-pub-msgs"></div>
+            <div class="chat-input-row">
+              <input class="chat-inp" id="pl-pub-input" type="text" placeholder="Message everyone..." maxlength="300"/>
+              <button class="chat-send" onclick="plSendPublic()">SEND</button>
+            </div>
+          </div>
+          <!-- DM pane (player <-> GM) -->
+          <div id="pl-dm-pane" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+            <div class="chat-msgs-wrap" id="pl-dm-msgs"></div>
+            <div class="chat-input-row">
+              <input class="chat-inp" id="pl-dm-input" type="text" placeholder="Private to GM..." maxlength="300"/>
+              <button class="chat-send" onclick="plSendDm()">SEND</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="status-bar">
+    <span><span id="conn-dot" style="color:var(--green)">&#9679;</span> <span id="conn-txt">CONNECTING</span></span>
+    <span id="stat-msg">Initialising...</span>
+    <span style="margin-left:auto" id="zoom-lbl">100%</span>
+  </div>
+</div>
+
+<input type="file" id="map-file" accept="image/*" onchange="handleMap(event)"/>
+<input type="file" id="tok-file" accept="image/*" onchange="handleTokImg(event)"/>
+<div id="ctx-menu" class="ctx-menu"></div>
+<div id="modal-wrap"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCA0pY7h5zTdZ-rxHnWHifEfR227n9VNfw",
+  authDomain:"battlemap-decb4.firebaseapp.com",
+  projectId:"battlemap-decb4",
+  storageBucket:"battlemap-decb4.firebasestorage.app",
+  messagingSenderId:"579724929236",
+  appId:"1:579724929236:web:aa5d8981c3d94ccc44b341",
+  databaseURL:"https://battlemap-decb4-default-rtdb.firebaseio.com"
+});
+const db=firebase.database();
+
+const COLS=['#c94c4c','#c9844c','#c9c44c','#4cc96c','#4cb8c9','#4c6ec9','#8c4cc9','#c94c9c'];
+let myRole='player',myName='',myId='',roomId='';
+let tokens={},mapImg=null,mapUrl=null;
+let gridOn=true,gSz=50,gridColor='#c9a84c';
+let panX=0,panY=0,zoom=1;
+let dragging=null,dOX=0,dOY=0;
+let panning=false,panStart=null,tdist=null,lastTouch={clientX:0,clientY:0};
+let pendImg=null,pendCol=COLS[0];
+let myTokId=null,imgCache={},selectedTokId=null;
+let tokRef,mapRef,setRef,initRef;
+let initState={active:false,order:[],currentIdx:0};
+let rafId=null;
+let rotating=null,rotStart=null;
+let dragGroup=[];  // [{tok, offX, offY}] tokens moving together in a group drag
+let dragBroadcastTimer=null; // throttle for live drag position broadcast
+let currentUser=null;
+let joinRole='player';
+// Drawing state
+let drawings=[];         // [{type:'free'|'arrow',pts:[],color}] local preview
+let drawingsRef=null;
+let currentDraw=null;    // active stroke being drawn
+let drawTool=null;       // 'draw'|'arrow'|null
+let drawColor='#ffaa44';
+let liveDrawRef=null;    // Firebase ref for in-progress stroke
+let liveDrawFlush=null;  // throttle timer
+// Measurement state
+let measureTool=false;
+let measureStart=null,measureEnd=null;
+let measureRef=null;     // Firebase ref for shared measurement
+// Ping state
+let pingMode=false;
+let pings=[];            // [{x,y,t}] local animation list
+let pingDbRef=null;
+// Chat state
+let chatRef=null;
+// Turn timer state
+let timerInterval=null;
+let timerSeconds=0;
+// Scene & fog state
+let scenes={};          // all scenes data
+let activeSceneId=null; // currently displayed scene
+let editingSceneId=null;// scene GM is editing (may differ from active)
+let fogData={};         // fog cells for current editing scene {x_y: true}
+let fogTool=null;       // 'paint' | 'erase' | null
+let fogDrawing=false;   // currently dragging fog
+let fogRef=null,sceneRef=null,activeSceneRef=null;
+// Weather state
+let weatherEffect='none';
+let weatherRef=null;
+let weatherParticles=[];
+let weatherRaf=null;
+// Scene token cloning state
+let prevSceneTokens={};  // snapshot of tokens before scene switch
+let prevSceneId=null;    // scene we switched FROM
+// Presence / active players state
+let presenceRef=null;
+let allPresence={};   // {uid: {name, role, t}}
+// Map notes state
+let mapNotes={};
+let mapNotesRef=null;
+let mapNoteMode=false; // GM placing a note
+// Hidden token tracking
+// (stored on tok.hidden = true)
+
+function uid(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36)}
+
+// ── AUTH SCREENS ──────────────────────────────────────────
+function showAuthTab(tab){
+  document.getElementById('auth-login').style.display=tab==='login'?'flex':'none';
+  document.getElementById('auth-register').style.display=tab==='register'?'flex':'none';
+  document.getElementById('auth-login').style.flexDirection='column';
+  document.getElementById('auth-login').style.gap='0';
+  document.getElementById('auth-register').style.flexDirection='column';
+  document.getElementById('auth-register').style.gap='0';
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('auth-err').textContent='';
+  document.getElementById('reg-err').textContent='';
+}
+
+function doSignIn(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  const err=document.getElementById('auth-err');
+  if(!email||!pass){err.textContent='Please fill in all fields.';return}
+  err.textContent='Signing in...';
+  firebase.auth().signInWithEmailAndPassword(email,pass)
+    .then(()=>{err.textContent='';})
+    .catch(e=>{err.textContent=friendlyAuthError(e.code)});
+}
+
+function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const err=document.getElementById('reg-err');
+  if(!name||!email||!pass){err.textContent='Please fill in all fields.';return}
+  if(name.length<2){err.textContent='Display name must be at least 2 characters.';return}
+  err.textContent='Creating account...';
+  firebase.auth().createUserWithEmailAndPassword(email,pass).then(cred=>{
+    const uid=cred.user.uid;
+    const nameKey=name.toLowerCase().replace(/\s+/g,'-');
+    return db.ref('usernames/'+nameKey).transaction(existing=>{
+      if(existing!==null)return undefined;
+      return uid;
+    }).then(result=>{
+      if(!result.committed){
+        return cred.user.delete().then(()=>{
+          err.textContent='That display name is already taken. Please choose another.';
+        });
+      }
+      return Promise.all([
+        cred.user.updateProfile({displayName:name}),
+        db.ref('users/'+uid).set({displayName:name,email,createdAt:Date.now()})
+      ]).then(()=>{
+        err.textContent='';
+        // Sign out after registration so user lands on sign-in tab
+        return firebase.auth().signOut().then(()=>{
+          showAuthTab('login');
+          document.getElementById('auth-err').textContent='Account created! Please sign in.';
+          document.getElementById('auth-err').style.color='var(--green)';
+          // Pre-fill email for convenience
+          const emailEl=document.getElementById('auth-email');
+          if(emailEl)emailEl.value=email;
+        });
+      });
+    });
+  }).catch(e=>{
+    if(e.code)err.textContent=friendlyAuthError(e.code);
+    else err.textContent='Something went wrong. Please try again.';
+  });
+}
+
+function doSignOut(){
+  if(document.getElementById('app').style.display==='flex')leaveRoom();
+  firebase.auth().signOut();
+}
+
+function friendlyAuthError(code){
+  const map={
+    'auth/user-not-found':'No account found with that email.',
+    'auth/wrong-password':'Incorrect password.',
+    'auth/email-already-in-use':'An account with that email already exists.',
+    'auth/invalid-email':'Please enter a valid email address.',
+    'auth/weak-password':'Password must be at least 6 characters.',
+    'auth/too-many-requests':'Too many attempts. Please try again later.',
+    'auth/invalid-credential':'Incorrect email or password.',
+  };
+  return map[code]||'Something went wrong. Please try again.';
+}
+
+// ── ROOM SCREEN ───────────────────────────────────────────
+let selectedRoomKey=null;
+let selectedRoomName=null;
+let allRoomsRef=null;
+
+function showRoomScreen(user){
+  currentUser=user;
+  myId=user.uid;
+  myName=user.displayName||user.email;
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('room-screen').style.display='flex';
+  document.getElementById('room-screen-user').textContent='Signed in as '+myName;
+  showRoomTab('join');
+  loadLiveRooms();
+}
+
+function showRoomTab(tab){
+  document.getElementById('room-tab-join').classList.toggle('active',tab==='join');
+  document.getElementById('room-tab-create').classList.toggle('active',tab==='create');
+  document.getElementById('room-join-pane').style.display=tab==='join'?'flex':'none';
+  document.getElementById('room-join-pane').style.flexDirection='column';
+  document.getElementById('room-join-pane').style.gap='10px';
+  document.getElementById('room-create-pane').style.display=tab==='create'?'flex':'none';
+  document.getElementById('room-create-pane').style.flexDirection='column';
+  document.getElementById('room-create-pane').style.gap='10px';
+  if(tab==='join')loadLiveRooms();
+}
+
+// Close any open room dropdowns when clicking elsewhere
+document.addEventListener('click',()=>{
+  document.querySelectorAll('.room-row-dropdown.open').forEach(d=>d.classList.remove('open'));
+});
+
+function loadLiveRooms(){
+  const list=document.getElementById('room-list-live');
+  if(!list)return;
+  list.innerHTML='<div class="empty-msg" style="font-size:12px">Loading rooms...</div>';
+  clearRoomSelection();
+  db.ref('roomCodes').once('value').then(snap=>{
+    const rooms=snap.val()||{};
+    const keys=Object.keys(rooms).sort((a,b)=>(rooms[b].createdAt||0)-(rooms[a].createdAt||0));
+    list.innerHTML='';
+    if(!keys.length){list.innerHTML='<div class="empty-msg" style="font-size:12px">No rooms yet — create one!</div>';return;}
+    keys.forEach(key=>{
+      const r=rooms[key];
+      const isOwner=r.gmUid===myId;
+      const div=document.createElement('div');div.className='room-row';
+      div.style.alignItems='center';
+      // Build menu button for owner
+      const menuHtml=isOwner?`<div class="room-row-menu" onclick="event.stopPropagation()">
+        <button class="room-row-menu-btn" onclick="toggleRoomMenu(this)" title="Room options">&#8942;</button>
+        <div class="room-row-dropdown">
+          <div class="room-row-dd-item" onclick="editRoomName('${key}')">&#9998;&nbsp; Edit Name</div>
+          <div class="room-row-dd-item" onclick="changeRoomCode('${key}','player')">&#128273;&nbsp; Change Player Code</div>
+          <div class="room-row-dd-item" onclick="changeRoomCode('${key}','gm')">&#128081;&nbsp; Change GM Code</div>
+          <div class="room-row-dd-sep"></div>
+          <div class="room-row-dd-item danger" onclick="deleteRoom('${key}')">&#128465;&nbsp; Delete Room</div>
+        </div>
+      </div>`:'';
+      div.innerHTML=`
+        <span style="font-size:18px">&#127757;</span>
+        <div style="flex:1;min-width:0">
+          <div class="room-row-name">${r.name}</div>
+          <div class="room-row-gm">GM: ${r.gmName||'Unknown'}</div>
+        </div>
+        ${menuHtml}
+        <span style="font-size:10px;color:var(--text-muted);flex-shrink:0;margin-left:4px">&#9656;</span>`;
+      div.onclick=()=>selectRoom(key,r.name,div);
+      list.appendChild(div);
+    });
+  }).catch(()=>{list.innerHTML='<div class="empty-msg" style="font-size:12px;color:var(--red)">Failed to load rooms</div>';});
+}
+
+function toggleRoomMenu(btn){
+  const dropdown=btn.nextElementSibling;
+  const wasOpen=dropdown.classList.contains('open');
+  document.querySelectorAll('.room-row-dropdown.open').forEach(d=>d.classList.remove('open'));
+  if(!wasOpen){
+    // Position using fixed coords so it escapes any overflow:hidden parent
+    const rect=btn.getBoundingClientRect();
+    dropdown.style.top=(rect.bottom+4)+'px';
+    dropdown.style.left='auto';
+    dropdown.style.right=(window.innerWidth-rect.right)+'px';
+    dropdown.classList.add('open');
+  }
+}
+
+function editRoomName(key){
+  document.querySelectorAll('.room-row-dropdown.open').forEach(d=>d.classList.remove('open'));
+  db.ref('roomCodes/'+key).once('value').then(snap=>{
+    if(!snap.exists()||snap.val().gmUid!==myId)return;
+    const currentName=snap.val().name||'';
+    showModal(`
+      <div class="modal-title">&#9998; EDIT ROOM NAME</div>
+      <div class="mlabel">New name</div>
+      <input class="fi" id="edit-room-name-inp" type="text" value="${currentName}" maxlength="40"/>
+      <div class="auth-err" id="edit-room-err"></div>
+    `,[
+      {label:'CANCEL',fn:closeModal},
+      {label:'SAVE',primary:true,fn:()=>{
+        const newName=(document.getElementById('edit-room-name-inp')?.value||'').trim();
+        const err=document.getElementById('edit-room-err');
+        if(!newName){err.textContent='Please enter a name.';return;}
+        db.ref('roomCodes/'+key).update({name:newName}).then(()=>{closeModal();loadLiveRooms();});
+      }}
+    ]);
+  });
+}
+
+function changeRoomCode(key,type){
+  document.querySelectorAll('.room-row-dropdown.open').forEach(d=>d.classList.remove('open'));
+  const label=type==='gm'?'GM Code':'Player Code';
+  showModal(`
+    <div class="modal-title">&#128273; CHANGE ${label.toUpperCase()}</div>
+    <div class="mlabel">New ${label}</div>
+    <input class="fi" id="new-room-code-inp" type="text" placeholder="Enter new code" autocomplete="off"/>
+    <div class="auth-err" id="change-code-err"></div>
+  `,[
+    {label:'CANCEL',fn:closeModal},
+    {label:'SAVE',primary:true,fn:()=>{
+      const newCode=(document.getElementById('new-room-code-inp')?.value||'').trim();
+      const err=document.getElementById('change-code-err');
+      if(!newCode||newCode.length<4){err.textContent='Code must be at least 4 characters.';return;}
+      db.ref('roomCodes/'+key).once('value').then(snap=>{
+        if(!snap.exists()||snap.val().gmUid!==myId){err.textContent='Permission denied.';return;}
+        const r=snap.val();
+        const otherCode=type==='gm'?atob(r.code||''):atob(r.gmCode||'');
+        if(newCode===otherCode){err.textContent='Must be different from the '+(type==='gm'?'player':'GM')+' code.';return;}
+        const field=type==='gm'?'gmCode':'code';
+        db.ref('roomCodes/'+key).update({[field]:btoa(newCode)}).then(()=>{
+          closeModal();
+          showModal(`
+            <div class="modal-title">&#10003; CODE UPDATED</div>
+            <p style="font-size:14px;color:var(--text);line-height:1.6">The ${label} has been updated. Share the new code with your ${type==='gm'?'co-GMs':'players'}.</p>
+          `,[{label:'OK',primary:true,fn:closeModal}]);
+        });
+      });
+    }}
+  ]);
+}
+
+function deleteRoom(key){
+  document.querySelectorAll('.room-row-dropdown.open').forEach(d=>d.classList.remove('open'));
+  db.ref('roomCodes/'+key).once('value').then(snap=>{
+    if(!snap.exists()||snap.val().gmUid!==myId){alert('You can only delete rooms you created.');return;}
+    const name=snap.val().name||'this room';
+    if(!confirm('Delete "'+name+'"? This permanently removes the room and all its data.'))return;
+    Promise.all([
+      db.ref('roomCodes/'+key).remove(),
+      db.ref('rooms/'+key).remove()
+    ]).then(()=>loadLiveRooms()).catch(()=>alert('Error deleting room. Try again.'));
+  });
+}
+
+function selectRoom(key,name,el){
+  selectedRoomKey=key;selectedRoomName=name;
+  // Highlight selected row
+  document.querySelectorAll('#room-list-live .room-row').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected');
+  // Show code entry section
+  document.getElementById('join-code-section').style.display='flex';
+  document.getElementById('join-code-section').style.flexDirection='column';
+  document.getElementById('join-code-section').style.gap='8px';
+  document.getElementById('join-selected-room').textContent='⚔ '+name;
+  document.getElementById('join-room-code').value='';
+  document.getElementById('join-gm-code').value='';
+  document.getElementById('room-err').textContent='';
+  // Reset role to player
+  joinRole='player';
+  document.querySelectorAll('#join-role-grid .role-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('jr-player').classList.add('sel');
+}
+
+function clearRoomSelection(){
+  selectedRoomKey=null;selectedRoomName=null;
+  document.getElementById('join-code-section').style.display='none';
+  document.getElementById('room-err').textContent='';
+  document.querySelectorAll('#room-list-live .room-row').forEach(r=>r.classList.remove('selected'));
+}
+
+function selJoinRole(r,el){
+  joinRole=r;
+  document.querySelectorAll('#join-role-grid .role-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  // Update code field label and placeholder based on role
+  const label=document.getElementById('join-code-label');
+  const inp=document.getElementById('join-room-code');
+  if(r==='gm'){
+    if(label)label.textContent='GM code';
+    if(inp)inp.placeholder='Enter GM code';
+  } else {
+    if(label)label.textContent='Room code';
+    if(inp)inp.placeholder='Enter room code';
+  }
+}
+
+function doCreateRoom(){
+  const name=document.getElementById('create-room-name').value.trim();
+  const code=document.getElementById('create-room-code').value.trim();
+  const gmCode=document.getElementById('create-gm-code').value.trim();
+  const err=document.getElementById('create-err');
+  if(!name||!code||!gmCode){err.textContent='Please fill in all fields including GM code.';return}
+  if(code===gmCode){err.textContent='GM code must be different from the player code.';return}
+  const roomKey=name.toLowerCase().replace(/[^a-z0-9]/g,'-');
+  err.textContent='Creating room...';
+  db.ref('roomCodes/'+roomKey).once('value').then(snap=>{
+    if(snap.exists()){err.textContent='A room with that name already exists. Choose a different name.';return}
+    db.ref('roomCodes/'+roomKey).set({
+      name,
+      code:btoa(code),
+      gmCode:btoa(gmCode),
+      gmUid:myId,
+      gmName:myName,
+      createdAt:Date.now()
+    }).then(()=>{
+      err.textContent='';
+      myRole='gm';roomId=roomKey;
+      enterApp();
+    });
+  }).catch(()=>{err.textContent='Error creating room. Try again.';});
+}
+
+function doJoinRoom(){
+  if(!selectedRoomKey){document.getElementById('room-err').textContent='Please select a room first.';return}
+  const code=document.getElementById('join-room-code').value.trim();
+  const err=document.getElementById('room-err');
+  if(!code){err.textContent='Please enter the '+(joinRole==='gm'?'GM':'room')+' code.';return}
+  err.textContent='Checking code...';
+  db.ref('roomCodes/'+selectedRoomKey).once('value').then(snap=>{
+    if(!snap.exists()){err.textContent='Room no longer exists.';return}
+    const r=snap.val();
+    const playerCode=atob(r.code||'');
+    const gmCode=r.gmCode?atob(r.gmCode):'';
+    if(joinRole==='gm'){
+      // GM must enter the GM code
+      if(gmCode&&code===gmCode){
+        myRole='gm';roomId=selectedRoomKey;err.textContent='';enterApp();return;
+      }
+      err.textContent='Invalid GM code.';return;
+    }
+    // Player or observer — must enter player code
+    if(code===playerCode){
+      myRole=joinRole;roomId=selectedRoomKey;err.textContent='';enterApp();return;
+    }
+    err.textContent='Invalid room code.';
+  }).catch(()=>{err.textContent='Error joining room. Try again.';});
+}
+
+function enterApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('room-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.body.classList.add('in-app');
+  // Show delete button only if this user created the room
+  db.ref('roomCodes/'+roomId).once('value').then(snap=>{
+    const r=snap.val()||{};
+    const btn=document.getElementById('btn-delete-room');
+    if(btn)btn.style.display=(r.gmUid===myId)?'inline':'none';
+  });
+  setupUI();connectDB();
+}
+
+function deleteCurrentRoom(){
+  if(!confirm('Permanently delete this room and ALL its data (maps, tokens, scenes, fog)? This cannot be undone.'))return;
+  db.ref('roomCodes/'+roomId).once('value').then(snap=>{
+    if(!snap.exists()||snap.val().gmUid!==myId){alert('Only the room creator can delete it.');return;}
+    Promise.all([
+      db.ref('roomCodes/'+roomId).remove(),
+      db.ref('rooms/'+roomId).remove()
+    ]).then(()=>{leaveRoom();});
+  });
+}
+
+// ── LOGIN ─────────────────────────────────────────────────
+function selRole(r,el){myRole=r;document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel')}
+function leaveRoom(){
+  // Detach all Firebase listeners
+  const room=db.ref('rooms/'+roomId);
+  room.off();
+  if(tokRef)tokRef.off();
+  if(mapRef)mapRef.off();
+  if(setRef)setRef.off();
+  if(fogRef)fogRef.off();
+  if(sceneRef)sceneRef.off();
+  if(activeSceneRef)activeSceneRef.off();
+  if(initRef)initRef.off();
+  if(chatRef)chatRef.off();
+  if(drawingsRef)drawingsRef.off();
+  if(measureRef)measureRef.off();
+  if(pingDbRef)pingDbRef.off();
+  if(weatherRef)weatherRef.off();
+  if(mapNotesRef)mapNotesRef.off();
+  if(weatherRaf){cancelAnimationFrame(weatherRaf);weatherRaf=null;}
+  document.querySelectorAll('.map-note-marker').forEach(e=>e.remove());
+  const wc=document.getElementById('weather-canvas');
+  if(wc){const ctx=wc.getContext('2d');ctx.clearRect(0,0,wc.width,wc.height);wc.style.display='none';}
+  tokens={};mapImg=null;mapUrl=null;myTokId=null;selectedTokId=null;imgCache={};
+  fogData={};scenes={};activeSceneId=null;editingSceneId=null;fogTool=null;
+  drawTool=null;measureTool=false;pingMode=false;drawings=[];currentDraw=null;
+  if(liveDrawRef)liveDrawRef.off();
+  if(liveDrawFlush){clearTimeout(liveDrawFlush);liveDrawFlush=null;}
+  measureStart=null;measureEnd=null;pings=[];stopTurnTimer();
+  openDmPlayerId=null;openDmPlayerName='';connectedPlayers={};
+  if(presenceRef)presenceRef.off();
+  db.ref('rooms/'+roomId+'/presence/'+myId).remove();
+  panX=0;panY=0;zoom=1;initState={active:false,order:[],currentIdx:0};
+  if(rafId){cancelAnimationFrame(rafId);rafId=null}
+  if(fogFlushTimer){clearTimeout(fogFlushTimer);fogFlushTimer=null;}
+  document.getElementById('app').style.display='none';
+  document.getElementById('room-screen').style.display='flex';
+  document.body.classList.remove('in-app');
+  showRoomTab('join');
+}
+
+// ── SETUP ─────────────────────────────────────────────────
+function setupUI(){
+  const b=document.getElementById('role-badge');
+  b.textContent=myRole==='gm'?'GM':myRole.toUpperCase();b.className='rbadge b-'+myRole;
+  document.getElementById('tb-name').textContent=myName;
+  document.getElementById('room-lbl').textContent='ROOM: '+roomId.toUpperCase();
+  // Reset ALL role controls to hidden first (handles re-join with different role)
+  ['gm-ctrl','pl-ctrl','obs-ctrl'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.style.cssText='display:none;align-items:center;gap:6px';
+  });
+  document.getElementById('obs-note').style.display='none';
+  // Show only the right one
+  if(myRole==='gm'){
+    document.getElementById('gm-ctrl').style.cssText='display:flex;align-items:center;gap:6px';
+  } else if(myRole==='player'){
+    document.getElementById('pl-ctrl').style.cssText='display:flex;align-items:center;gap:6px';
+  } else {
+    document.getElementById('obs-ctrl').style.cssText='display:flex;align-items:center;gap:6px';
+    document.getElementById('obs-note').style.display='block';
+  }
+  document.getElementById('btn-next').style.display=myRole==='gm'?'flex':'none';
+  // Show scene panel for GM only
+  const sp=document.getElementById('scene-panel');
+  if(sp)sp.style.display=myRole==='gm'?'block':'none';
+  // Chat panels — observer sees nothing
+  document.getElementById('gm-chat').style.display='none';
+  document.getElementById('player-chat').style.display='none';
+  document.getElementById('dm-convo').style.display='none';
+  initCanvas();
+  document.addEventListener('fullscreenchange',onFsChange);
+  document.addEventListener('webkitfullscreenchange',onFsChange);
+}
+
+function toggleFullscreen(){
+  const el=document.getElementById('canvas-wrap');
+  if(!document.fullscreenElement&&!document.webkitFullscreenElement){
+    const req=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(req)req.call(el).catch(()=>{});
+  } else {
+    const ex=document.exitFullscreen||document.webkitExitFullscreen;
+    if(ex)ex.call(document).catch(()=>{});
+  }
+}
+
+function onFsChange(){
+  const isFs=!!(document.fullscreenElement||document.webkitFullscreenElement);
+  const btn=document.getElementById('btn-fs');
+  if(btn)btn.textContent=isFs?'✕ EXIT FULLSCREEN':'⛶ FULLSCREEN';
+  if(btn)btn.classList.toggle('active',isFs);
+  // re-size canvas after fullscreen transition
+  setTimeout(resize,100);
+}
+
+// ── FIREBASE ──────────────────────────────────────────────
+function connectDB(){
+  const room=db.ref('rooms/'+roomId);
+  sceneRef=room.child('scenes');
+  activeSceneRef=room.child('activeScene');
+  initRef=room.child('initiative');
+  weatherRef=room.child('weather');
+  weatherRef.on('value',s=>{
+    weatherEffect=s.val()||'none';
+    const sel=document.getElementById('weather-select');
+    if(sel)sel.value=weatherEffect;
+    startWeather(weatherEffect);
+  });
+
+  // Watch all scenes (GM needs all, players only care about active)
+  sceneRef.on('value',s=>{
+    scenes=s.val()||{};
+    if(myRole==='gm')renderScenePanel();
+    // If no scenes yet, create a default one
+    if(myRole==='gm'&&Object.keys(scenes).length===0){
+      createDefaultScene();
+    }
+  });
+
+  // Watch which scene is active (what players see)
+  activeSceneRef.on('value',s=>{
+    const sid=s.val();
+    if(!sid)return;
+    const isNewScene=sid!==activeSceneId;
+    // Capture current tokens before switching (for clone offer)
+    if(isNewScene&&Object.keys(tokens).length>0){
+      prevSceneTokens={...tokens};
+      prevSceneId=activeSceneId;
+    }
+    if(myRole!=='gm'||(myRole==='gm'&&!editingSceneId)){
+      editingSceneId=sid;
+    }
+    activeSceneId=sid;
+    if(myRole==='gm')renderScenePanel();
+    loadScene(editingSceneId);
+  });
+
+  // Initiative is room-wide (not per scene)
+  initRef.on('value',s=>{
+    initState=s.val()||{active:false,order:[],currentIdx:0};
+    if(!Array.isArray(initState.order))initState.order=[];
+    renderInitPanel();updateBanners();
+    if(initState.active)startPulse();else{if(rafId){cancelAnimationFrame(rafId);rafId=null}drawAll()}
+  });
+
+  // Chat — new structure
+  chatRef=db.ref('rooms/'+roomId+'/chat');
+  initChat();
+  // Drawings
+  drawingsRef=db.ref('rooms/'+roomId+'/drawings');
+  drawingsRef.on('value',s=>{drawings=Object.values(s.val()||{});drawAll()});
+  // Live draw — single node showing the in-progress stroke from the GM
+  liveDrawRef=db.ref('rooms/'+roomId+'/liveDraw');
+  liveDrawRef.on('value',s=>{
+    const d=s.val();
+    // Only update if NOT the local drawer (we already have currentDraw locally)
+    if(!drawTool){
+      currentDraw=d||null;
+      drawAll();
+    }
+  });
+  // Measurement (GM broadcasts, everyone sees)
+  measureRef=db.ref('rooms/'+roomId+'/measure');
+  measureRef.on('value',s=>{
+    const d=s.val();
+    if(d&&d.x1!=null){measureStart={x:d.x1,y:d.y1};measureEnd={x:d.x2,y:d.y2};}
+    else{measureStart=null;measureEnd=null;}
+    drawAll();
+    const mi=document.getElementById('measure-info');
+    if(mi)mi.style.display=(measureStart&&measureEnd)?'block':'none';
+  });
+  // Pings
+  pingDbRef=db.ref('rooms/'+roomId+'/ping');
+  pingDbRef.on('value',s=>{
+    const d=s.val();
+    if(d&&d.t&&Date.now()-d.t<3000){addPing(d.x,d.y,false)}
+  });
+  // Presence — watch all connected users for active players panel
+  presenceRef=db.ref('rooms/'+roomId+'/presence');
+  presenceRef.on('value',s=>{
+    const prev=Object.keys(allPresence);
+    allPresence=s.val()||{};
+    const curr=Object.keys(allPresence);
+    // Find newly joined users (in curr but not in prev)
+    curr.forEach(uid=>{
+      if(!prev.includes(uid)&&uid!==myId&&allPresence[uid]){
+        showJoinToast(allPresence[uid].name,allPresence[uid].role);
+      }
+    });
+    renderPlayersPanel();
+  });
+  // Register my own presence
+  const myPresRef=presenceRef.child(myId);
+  myPresRef.set({name:myName,role:myRole,t:Date.now()});
+  myPresRef.onDisconnect().remove();
+
+  db.ref('.info/connected').on('value',s=>{
+    document.getElementById('conn-dot').style.color=s.val()?'var(--green)':'var(--red)';
+    document.getElementById('conn-txt').textContent=s.val()?'CONNECTED':'OFFLINE';
+  });
+}
+
+function sceneNodeRef(sid){return db.ref('rooms/'+roomId+'/scenes/'+sid)}
+
+function createDefaultScene(){
+  const sid='scene-'+uid();
+  sceneRef.child(sid).set({name:'Scene 1',createdAt:Date.now()});
+  activeSceneRef.set(sid);
+}
+
+function loadScene(sid){
+  if(!sid)return;
+  // Detach old listeners
+  if(tokRef)tokRef.off();
+  if(mapRef)mapRef.off();
+  if(setRef)setRef.off();
+  if(fogRef)fogRef.off();
+
+  const sRef=sceneNodeRef(sid);
+  tokRef=sRef.child('tokens');
+  mapRef=sRef.child('map');
+  setRef=sRef.child('settings');
+  fogRef=sRef.child('fog');
+  if(mapNotesRef)mapNotesRef.off();
+  mapNotesRef=sRef.child('mapNotes');
+  mapNotesRef.on('value',s=>{mapNotes=s.val()||{};renderMapNotes();});
+
+  let sceneFirstLoad=true; // track first snapshot per scene load
+  tokRef.on('value',s=>{
+    const incoming=s.val()||{};
+    const currentlyDragging=dragging?.id;
+    Object.keys(incoming).forEach(id=>{
+      if(!incoming[id])return;
+      if(id===currentlyDragging){
+        if(tokens[id]?._px!=null){incoming[id]._px=tokens[id]._px;incoming[id]._py=tokens[id]._py;}
+      } else {
+        delete incoming[id]._px;delete incoming[id]._py;
+        if(tokens[id]?._iw){incoming[id]._iw=tokens[id]._iw;incoming[id]._ih=tokens[id]._ih;}
+      }
+    });
+    tokens=incoming;
+    if(myRole==='player'&&!myTokId){
+      const mine=Object.values(tokens).find(t=>t&&!t.terrain&&t.ownerId===myId);
+      if(mine)myTokId=mine.id;
+    }
+    // On first load of a new scene: if scene is empty and we came from another scene,
+    // offer to clone tokens from the previous scene
+    if(sceneFirstLoad){
+      sceneFirstLoad=false;
+      const isEmpty=Object.keys(incoming).length===0;
+      const hasPrev=Object.keys(prevSceneTokens).length>0;
+      if(isEmpty&&hasPrev){
+        offerTokenClone();
+      }
+    }
+    renderSidebar();drawAll();
+  });
+
+  mapRef.on('value',s=>{
+    const d=s.val();
+    if(d&&d.url){
+      if(mapUrl!==d.url){mapUrl=d.url;const i=new Image();i.onload=()=>{mapImg=i;zoomFit();};i.src=d.url}
+    } else {mapImg=null;mapUrl=null;drawAll()}
+  });
+
+  setRef.on('value',s=>{
+    const sv=s.val()||{};
+    gridOn=sv.gridOn!==undefined?sv.gridOn:true;gSz=sv.gSz||50;
+    gridColor=sv.gridColor||'#c9a84c';
+    const gszEl=document.getElementById('gsz-in');if(gszEl)gszEl.value=gSz;
+    const gcEl=document.getElementById('grid-color-in');if(gcEl)gcEl.value=gridColor;
+    const bgEl=document.getElementById('btn-grid');if(bgEl)bgEl.classList.toggle('active',gridOn);
+    drawAll();
+  });
+
+  fogRef.on('value',s=>{
+    fogData=s.val()||{};
+    drawAll();
+  });
+}
+
+// ── CANVAS ────────────────────────────────────────────────
+const $c=()=>document.getElementById('battlemap-canvas');
+const $g=()=>$c().getContext('2d');
+const $w=()=>document.getElementById('canvas-wrap');
+
+let canvasInited=false;
+let lpTimer=null,lpFired=false; // long-press state
+
+function initCanvas(){
+  if(canvasInited){resize();return;} // only attach listeners once
+  canvasInited=true;
+  resize();window.addEventListener('resize',resize);
+  const c=$c();
+  c.addEventListener('mousedown',onMD);c.addEventListener('mousemove',onMM);
+  c.addEventListener('mouseup',onMU);c.addEventListener('mouseleave',onMU);
+  c.addEventListener('contextmenu',onRC);c.addEventListener('wheel',onWh,{passive:false});
+  c.addEventListener('touchstart',onTS,{passive:false});c.addEventListener('touchmove',onTM,{passive:false});
+  c.addEventListener('touchend',onTE);
+}
+function resize(){
+  const w=$w(),c=$c();
+  c.width=w.clientWidth;c.height=w.clientHeight;
+  const wc=document.getElementById('weather-canvas');
+  if(wc){wc.width=w.clientWidth;wc.height=w.clientHeight;}
+  drawAll();
+}
+
+function drawAll(){
+  const c=$c(),g=$g();
+  g.clearRect(0,0,c.width,c.height);g.save();g.translate(panX,panY);g.scale(zoom,zoom);
+  if(mapImg){g.drawImage(mapImg,0,0)}
+  else{
+    g.fillStyle='#0d0d18';g.fillRect(-panX/zoom-10,-panY/zoom-10,c.width/zoom+20,c.height/zoom+20);
+    g.strokeStyle='rgba(201,168,76,0.07)';g.lineWidth=0.5/zoom;
+    for(let x=0;x<6000;x+=gSz){g.beginPath();g.moveTo(x,0);g.lineTo(x,6000);g.stroke()}
+    for(let y=0;y<6000;y+=gSz){g.beginPath();g.moveTo(0,y);g.lineTo(6000,y);g.stroke()}
+    g.fillStyle='rgba(201,168,76,0.3)';g.font=(16/zoom)+'px Cinzel,serif';g.textAlign='center';g.textBaseline='middle';
+    g.fillText(myRole==='gm'?'No map — click UPLOAD MAP':'Awaiting map from Game Master...',c.width/(2*zoom),c.height/(2*zoom));
+  }
+  if(gridOn&&mapImg)drawGrid(g,c);
+  // Draw all tokens — apply visibility rules per type
+  const allToks=Object.values(tokens).filter(Boolean);
+  // Terrain first (visible to everyone unless hidden by GM)
+  allToks.filter(t=>t.terrain).forEach(t=>{
+    if(t.hidden&&myRole!=='gm')return;
+    drawToken(g,t);
+  });
+  // Combat and monster tokens — sorted by zOrder so last-moved renders on top
+  allToks.filter(t=>!t.terrain)
+    .sort((a,b)=>(a.zOrder||0)-(b.zOrder||0))
+    .forEach(t=>{
+      if(t.hidden&&myRole!=='gm')return;
+      drawToken(g,t);
+    });
+  // Glow ring on current-turn token
+  if(initState.active&&initState.order.length){
+    const cur=initState.order[initState.currentIdx||0];
+    if(cur&&cur.tokId&&tokens[cur.tokId])drawGlow(g,tokens[cur.tokId]);
+  }
+  // Draw fog AFTER tokens (so fog covers them for players)
+  drawFog(g,c);
+  // Drawings
+  drawDrawings(g);
+  // Measurement line (GM tool, visible to all)
+  if(measureStart&&measureEnd)drawMeasure(g);
+  g.restore();
+  // Pings (screen-space, not world-space)
+  drawPings();
+  document.getElementById('zoom-lbl').textContent=Math.round(zoom*100)+'%';
+  // Re-position map note markers after pan/zoom
+  if(myRole==='gm')renderMapNotes();
+}
+
+function drawDrawings(g){
+  if(!drawings.length&&!currentDraw)return;
+  g.save();
+  const allD=[...drawings];
+  if(currentDraw)allD.push(currentDraw);
+  allD.forEach(d=>{
+    if(!d||!d.pts||d.pts.length<2)return;
+    g.strokeStyle=d.color||'#ffaa44';g.lineWidth=2.5/zoom;g.lineCap='round';g.lineJoin='round';
+    g.beginPath();g.moveTo(d.pts[0].x,d.pts[0].y);
+    d.pts.slice(1).forEach(p=>g.lineTo(p.x,p.y));
+    g.stroke();
+    if(d.type==='arrow'&&d.pts.length>=2){
+      const last=d.pts[d.pts.length-1];
+      const prev=d.pts[d.pts.length-2];
+      const angle=Math.atan2(last.y-prev.y,last.x-prev.x);
+      const hs=14/zoom;
+      g.fillStyle=d.color||'#ffaa44';
+      g.beginPath();
+      g.moveTo(last.x,last.y);
+      g.lineTo(last.x-hs*Math.cos(angle-0.4),last.y-hs*Math.sin(angle-0.4));
+      g.lineTo(last.x-hs*Math.cos(angle+0.4),last.y-hs*Math.sin(angle+0.4));
+      g.closePath();g.fill();
+    }
+  });
+  g.restore();
+}
+
+function drawMeasure(g){
+  if(!measureStart||!measureEnd)return;
+  g.save();
+  g.strokeStyle='#aaffcc';g.lineWidth=2/zoom;g.setLineDash([6/zoom,4/zoom]);
+  g.beginPath();g.moveTo(measureStart.x,measureStart.y);g.lineTo(measureEnd.x,measureEnd.y);g.stroke();
+  g.setLineDash([]);
+  // Dots at each end
+  g.fillStyle='#aaffcc';
+  g.beginPath();g.arc(measureStart.x,measureStart.y,4/zoom,0,Math.PI*2);g.fill();
+  g.beginPath();g.arc(measureEnd.x,measureEnd.y,4/zoom,0,Math.PI*2);g.fill();
+  // Distance label
+  const dx=measureEnd.x-measureStart.x,dy=measureEnd.y-measureStart.y;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  const squares=dist/gSz;
+  const ftPerSq=5;
+  const label=squares.toFixed(1)+' sq / '+(squares*ftPerSq).toFixed(0)+'ft';
+  const mx=(measureStart.x+measureEnd.x)/2,my=(measureStart.y+measureEnd.y)/2;
+  const fs=13/zoom;
+  g.font=fs+'px Cinzel,serif';g.textAlign='center';g.textBaseline='bottom';
+  g.fillStyle='#001a00cc';g.strokeStyle='#001a00cc';g.lineWidth=4/zoom;
+  g.strokeText(label,mx,my-4/zoom);
+  g.fillStyle='#aaffcc';g.fillText(label,mx,my-4/zoom);
+  // Update measure-info overlay
+  const mi=document.getElementById('measure-info');
+  if(mi){mi.textContent=label;mi.style.display='block';}
+  g.restore();
+}
+
+function drawPings(){
+  const now=Date.now();
+  const c=$c();
+  pings=pings.filter(p=>now-p.t<1800);
+  pings.forEach(p=>{
+    const age=(now-p.t)/1800;
+    const sx=p.x*zoom+panX,sy=p.y*zoom+panY;
+    // Draw directly on canvas element using fixed overlay
+    const wrap=$w();
+    let el=document.getElementById('ping-'+p.id);
+    if(!el){
+      el=document.createElement('div');
+      el.id='ping-'+p.id;
+      el.style.cssText='position:absolute;border-radius:50%;pointer-events:none;z-index:50;border:3px solid #c9a84c;transform:translate(-50%,-50%)';
+      wrap.appendChild(el);
+    }
+    const sz=age*80;
+    el.style.width=sz+'px';el.style.height=sz+'px';
+    el.style.left=sx+'px';el.style.top=sy+'px';
+    el.style.opacity=String(1-age);
+  });
+  // Clean up finished pings
+  document.querySelectorAll('[id^=ping-]').forEach(el=>{
+    const pid=el.id.replace('ping-','');
+    if(!pings.find(p=>p.id===pid))el.remove();
+  });
+  if(pings.length)requestAnimationFrame(()=>drawPings());
+}
+
+function drawFog(g,c){
+  if(!fogData||Object.keys(fogData).length===0)return;
+  const isGM=myRole==='gm';
+  // Collect fogged cells
+  const cells=Object.keys(fogData);
+  if(!cells.length)return;
+  g.save();
+  cells.forEach(key=>{
+    const parts=key.split('_');
+    const fx=parseInt(parts[0])*gSz,fy=parseInt(parts[1])*gSz;
+    if(isGM){
+      // GM sees semi-transparent purple fog — can still see map underneath
+      g.fillStyle='rgba(60,30,100,0.55)';
+    } else {
+      // Players/observers see solid black fog
+      g.fillStyle='rgba(0,0,0,1)';
+    }
+    g.fillRect(fx,fy,gSz,gSz);
+  });
+  // For players, draw their OWN token on top of fog so they can always see it
+  if(!isGM&&myTokId&&tokens[myTokId]){
+    // Clear the fog area under my token so it's always visible
+    const tok=tokens[myTokId];
+    const r=(tok.size||gSz)/2;
+    const ftx=tok._px!=null?tok._px:tok.x;
+    const fty=tok._py!=null?tok._py:tok.y;
+    g.save();
+    g.globalCompositeOperation='destination-out';
+    g.beginPath();g.arc(ftx+r,fty+r,r+4,0,Math.PI*2);
+    g.fill();
+    g.restore();
+    // Redraw the token on top
+    drawToken(g,tok);
+  }
+  // GM fog border lines for visibility
+  if(isGM){
+    g.strokeStyle='rgba(120,80,200,0.4)';
+    g.lineWidth=0.5/zoom;
+    cells.forEach(key=>{
+      const parts=key.split('_');
+      const fx=parseInt(parts[0])*gSz,fy=parseInt(parts[1])*gSz;
+      g.strokeRect(fx,fy,gSz,gSz);
+    });
+  }
+  g.restore();
+}
+
+function drawGrid(g,c){
+  // Only draw grid over the map image — clip to map bounds
+  const mapW=mapImg?mapImg.width:6000;
+  const mapH=mapImg?mapImg.height:6000;
+  g.save();
+  // Clip to map rect so grid never extends into the surrounding dark area
+  g.beginPath();g.rect(0,0,mapW,mapH);g.clip();
+  const hex=gridColor||'#c9a84c';
+  const r=parseInt(hex.slice(1,3),16),gr=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  g.strokeStyle=`rgba(${r},${gr},${b},0.5)`;
+  g.lineWidth=0.5/zoom;
+  const sx=Math.max(0,-panX/zoom),sy=Math.max(0,-panY/zoom);
+  const ex=Math.min(mapW,sx+c.width/zoom),ey=Math.min(mapH,sy+c.height/zoom);
+  const ox=((sx%gSz)+gSz)%gSz,oy=((sy%gSz)+gSz)%gSz;
+  for(let x=sx-ox;x<=ex+gSz;x+=gSz){g.beginPath();g.moveTo(x,sy);g.lineTo(x,ey);g.stroke()}
+  for(let y=sy-oy;y<=ey+gSz;y+=gSz){g.beginPath();g.moveTo(sx,y);g.lineTo(ex,y);g.stroke()}
+  g.restore();
+}
+
+function drawGlow(g,tok){
+  const r=(tok.size||gSz)/2;
+  const tx=tok._px!=null?tok._px:tok.x;
+  const ty=tok._py!=null?tok._py:tok.y;
+  const cx=tx+r,cy=ty+r;
+  const pulse=0.45+0.35*Math.sin(Date.now()/400);
+  g.save();
+  g.beginPath();g.arc(cx,cy,r+6/zoom,0,Math.PI*2);
+  g.strokeStyle=`rgba(201,168,76,${pulse})`;g.lineWidth=3/zoom;g.stroke();
+  g.beginPath();g.arc(cx,cy,r+10/zoom,0,Math.PI*2);
+  g.strokeStyle=`rgba(201,168,76,${pulse*0.35})`;g.lineWidth=2/zoom;g.stroke();
+  g.restore();
+}
+
+function drawToken(g,tok){
+  // Use drag preview position if set, otherwise use stored position
+  const tx=tok._px!=null?tok._px:tok.x;
+  const ty=tok._py!=null?tok._py:tok.y;
+  const r=(tok.size||gSz)/2,cx=tx+r,cy=ty+r,isMe=tok.id===selectedTokId;
+  const isTerrain=!!tok.terrain;
+  const rot=(tok.rotation||0)*Math.PI/180;
+  g.save();
+  if(isTerrain&&rot!==0){
+    // Rotate around the actual drawn image centre (may not be square)
+    const iw=tok._iw||r*2,ih=tok._ih||r*2;
+    const pivX=tx+iw/2,pivY=ty+ih/2;
+    g.translate(pivX,pivY);g.rotate(rot);g.translate(-pivX,-pivY);
+  }
+  if(tok.imageData){
+    let img=imgCache[tok.id];
+    if(!img){img=new Image();img.onload=()=>{imgCache[tok.id]=img;drawAll()};img.src=tok.imageData;imgCache[tok.id]=img}
+    if(isTerrain){
+      if(img.complete&&img.naturalWidth){
+        // Preserve natural aspect ratio — scale so the longest side = tok.size
+        const scale=Math.min((r*2)/img.naturalWidth,(r*2)/img.naturalHeight);
+        const iw=img.naturalWidth*scale,ih=img.naturalHeight*scale;
+        // Store actual drawn size on tok for hit-testing
+        tok._iw=iw;tok._ih=ih;
+        g.drawImage(img,tx,ty,iw,ih);
+        // Faint border matching actual drawn size
+        g.strokeStyle=(tok.color||'#4c7ec9')+'99';g.lineWidth=1/zoom;g.strokeRect(tx,ty,iw,ih);
+      } else {
+        // Placeholder while loading
+        g.fillStyle=(tok.color||'#4c7ec9')+'88';g.fillRect(tx,ty,r*2,r*2);
+      }
+    } else {
+      g.beginPath();g.arc(cx,cy,r-2,0,Math.PI*2);g.save();g.clip();
+      if(img.complete&&img.naturalWidth)g.drawImage(img,tx+2,ty+2,(r-2)*2,(r-2)*2);
+      else{g.fillStyle=tok.color||'#888';g.fill()}
+      g.restore();
+    }
+  } else {
+    if(isTerrain){
+      // No image — draw a tinted rectangle placeholder
+      g.beginPath();g.rect(tx,ty,r*2,r*2);
+      g.fillStyle=(tok.color||'#4c7ec9')+'88';g.fill();
+      g.fillStyle='rgba(255,255,255,0.7)';g.font='bold '+Math.max(8,r*.4)+'px Crimson Text,serif';
+      g.textAlign='center';g.textBaseline='middle';g.fillText((tok.name||'?').slice(0,2).toUpperCase(),cx,cy);
+    } else {
+      g.beginPath();g.arc(cx,cy,r-2,0,Math.PI*2);g.fillStyle=tok.color||'#c94c4c';g.fill();
+      g.fillStyle='#fff';g.font='bold '+Math.max(10,r*.45)+'px Crimson Text,serif';
+      g.textAlign='center';g.textBaseline='middle';
+      g.fillText((tok.name||'?').slice(0,2).toUpperCase(),cx,cy);
+    }
+  }
+  // Border
+  if(isTerrain){
+    if(!tok.imageData){
+      // Only draw border on placeholder (image terrain draws its own border inline)
+      g.beginPath();g.rect(tx+1,ty+1,r*2-2,r*2-2);
+      g.strokeStyle=tok.color||'#4c7ec9';g.lineWidth=1.5/zoom;g.stroke();
+    }
+    // Hidden terrain — GM sees dashed orange overlay
+    if(tok.hidden&&myRole==='gm'){
+      const iw=tok._iw||r*2,ih=tok._ih||r*2;
+      g.beginPath();g.rect(tx,ty,iw,ih);
+      g.strokeStyle='#ff884488';g.lineWidth=2/zoom;g.setLineDash([4/zoom,3/zoom]);g.stroke();g.setLineDash([]);
+      g.fillStyle='rgba(255,100,0,0.12)';g.fill();
+      const hf=Math.max(8,Math.min(iw,ih)*0.15);
+      g.font=hf+'px serif';g.textAlign='right';g.textBaseline='top';
+      g.fillStyle='#ff8844';g.fillText('👁',tx+iw,ty);
+    }
+  } else {
+    // Death state — grey border + skull
+    const isDead=tok.hpMax&&(tok.hpCur!=null?tok.hpCur:tok.hpMax)<=0;
+    g.beginPath();g.arc(cx,cy,r-1.5,0,Math.PI*2);
+    const borderCol=isDead?'#666':isMe?'#fff':(tok.color||'#c94c4c');
+    g.strokeStyle=borderCol;g.lineWidth=(isMe?3:1.5)/zoom;g.stroke();
+    if(isDead){
+      // Grey overlay + skull
+      g.beginPath();g.arc(cx,cy,r-2,0,Math.PI*2);
+      g.fillStyle='rgba(0,0,0,0.55)';g.fill();
+      const sf=Math.max(10,r*0.55);
+      g.font=sf+'px serif';g.textAlign='center';g.textBaseline='middle';
+      g.fillText('☠',cx,cy);
+    }
+    // Hidden token — GM sees ghost overlay
+    if(tok.monster&&myRole==='gm'){
+      // Monster border — dashed red to distinguish from player tokens
+      g.beginPath();g.arc(cx,cy,r-1,0,Math.PI*2);
+      g.strokeStyle=tok.hidden?'#c94c4caa':'#c94c4c66';
+      g.lineWidth=2/zoom;g.setLineDash([5/zoom,3/zoom]);g.stroke();g.setLineDash([]);
+      if(tok.hidden){
+        // Hidden monster — extra ghost overlay
+        g.fillStyle='rgba(180,20,20,0.15)';g.fill();
+        const hf=Math.max(8,r*0.38);
+        g.font=hf+'px serif';g.textAlign='right';g.textBaseline='top';
+        g.fillStyle='#c94c4c';g.fillText('👁',tx+r*2,ty);
+      }
+    } else if(tok.hidden&&myRole==='gm'){
+      g.beginPath();g.arc(cx,cy,r-1,0,Math.PI*2);
+      g.strokeStyle='#ff884488';g.lineWidth=2.5/zoom;g.setLineDash([4/zoom,3/zoom]);g.stroke();g.setLineDash([]);
+      g.fillStyle='rgba(255,100,0,0.18)';g.fill();
+      const hf=Math.max(8,r*0.38);
+      g.font=hf+'px serif';g.textAlign='right';g.textBaseline='top';
+      g.fillStyle='#ff8844';g.fillText('👁',tx+r*2,ty);
+    }
+    // Free-snap indicator (no grid snap)
+    if(tok.freeSnap){
+      const ff=Math.max(7,r*0.3);
+      g.font=ff+'px serif';g.textAlign='left';g.textBaseline='top';
+      g.fillText('⊕',tx,ty);
+    }
+  }
+  // Label (combat only)
+  if(!isTerrain){
+    const fs=Math.max(9,r*.35);
+    g.font=fs+'px Cinzel,serif';g.textAlign='center';g.textBaseline='top';
+    g.lineWidth=3/zoom;g.strokeStyle='rgba(0,0,0,0.85)';
+    g.strokeText(tok.name||'?',cx,ty+r*2+3/zoom);
+    g.fillStyle='#e8e0d0';g.fillText(tok.name||'?',cx,ty+r*2+3/zoom);
+    // Group indicator — small chain icon on grouped tokens
+    if(tok.groupId){
+      const gs=Math.max(8,r*0.38);
+      g.font=gs+'px serif';g.textAlign='right';g.textBaseline='top';
+      g.fillText('⛓',tx+r*2,ty);
+    }
+    // Auras
+    if(tok.auras){
+      tok.auras.forEach(a=>{
+        const ar=(a.radiusFt/5)*gSz;
+        g.beginPath();g.arc(cx,cy,ar,0,Math.PI*2);
+        g.strokeStyle=a.color||'#4cb8c9';g.lineWidth=1.5/zoom;
+        g.globalAlpha=0.5;g.stroke();
+        g.fillStyle=a.color||'#4cb8c9';g.globalAlpha=0.08;g.fill();
+        g.globalAlpha=1;
+      });
+    }
+    // Status effects
+    if(tok.statuses&&tok.statuses.length){
+      const iconSize=Math.max(10,r*0.45);
+      tok.statuses.forEach((s,i)=>{
+        const ix=tx+(i%5)*(iconSize+2);
+        const iy=ty-iconSize-2-Math.floor(i/5)*(iconSize+2);
+        g.font=iconSize+'px serif';g.textAlign='left';g.textBaseline='top';
+        g.fillText(s.icon||'?',ix,iy);
+        if(s.rounds!=null){
+          g.font=Math.max(7,iconSize*0.55)+'px Cinzel,serif';
+          g.fillStyle='#fff';g.strokeStyle='#000';g.lineWidth=2/zoom;
+          g.strokeText(s.rounds,ix+iconSize-2,iy+iconSize-4);
+          g.fillText(s.rounds,ix+iconSize-2,iy+iconSize-4);
+        }
+      });
+    }
+    // GM-only HP bar
+    if(myRole==='gm'&&tok.hpMax){
+      const hp=tok.hpCur!=null?tok.hpCur:tok.hpMax;
+      const pct=Math.max(0,Math.min(1,hp/tok.hpMax));
+      const bw=r*1.6,bh=5/zoom,bx=cx-bw/2,by=ty-8/zoom;
+      g.fillStyle='#333';g.fillRect(bx,by,bw,bh);
+      const col=pct>0.5?'#4cb87c':pct>0.25?'#c9c44c':'#c94c4c';
+      g.fillStyle=col;g.fillRect(bx,by,bw*pct,bh);
+      g.strokeStyle='#000';g.lineWidth=0.5/zoom;g.strokeRect(bx,by,bw,bh);
+      g.font=Math.max(8,r*0.32)+'px Cinzel,serif';g.textAlign='center';g.textBaseline='middle';
+      g.fillStyle='#fff';g.strokeStyle='#000';g.lineWidth=2/zoom;
+      g.strokeText(hp+'/'+tok.hpMax,cx,by+bh/2);
+      g.fillText(hp+'/'+tok.hpMax,cx,by+bh/2);
+    }
+  }
+  g.restore();
+}
+
+// Pulse animation loop
+function startPulse(){
+  if(rafId)return;
+  function loop(){if(initState.active){drawAll();rafId=requestAnimationFrame(loop)}else{rafId=null}}
+  rafId=requestAnimationFrame(loop);
+}
+
+// ── INPUT ─────────────────────────────────────────────────
+function wpos(ex,ey){const r=$c().getBoundingClientRect();return{x:(ex-r.left-panX)/zoom,y:(ey-r.top-panY)/zoom}}
+
+function tokAt(wx,wy,prioritiseOwn){
+  const all=Object.values(tokens).filter(Boolean);
+  const hit=t=>{
+    const r=(t.size||gSz)/2;
+    if(t.terrain){
+      const iw=t._iw||r*2,ih=t._ih||r*2;
+      const tx2=t._px!=null?t._px:t.x,ty2=t._py!=null?t._py:t.y;
+      const rot=(t.rotation||0)*Math.PI/180;
+      if(rot===0){
+        return wx>=tx2&&wx<=tx2+iw&&wy>=ty2&&wy<=ty2+ih;
+      }
+      // Rotate the mouse point in reverse around the token centre
+      const cx2=tx2+iw/2,cy2=ty2+ih/2;
+      const cos=Math.cos(-rot),sin=Math.sin(-rot);
+      const dx=wx-cx2,dy=wy-cy2;
+      const rx=dx*cos-dy*sin+cx2;
+      const ry=dx*sin+dy*cos+cy2;
+      return rx>=tx2&&rx<=tx2+iw&&ry>=ty2&&ry<=ty2+ih;
+    }
+    const dx=wx-(t.x+r),dy=wy-(t.y+r);
+    return Math.hypot(dx,dy)<=r;
+  };
+  const combat=all.filter(t=>!t.terrain).reverse();
+  const terrain=all.filter(t=>t.terrain).reverse();
+  if(prioritiseOwn&&myRole==='player'){
+    const mine=combat.find(t=>t.ownerId===myId&&hit(t));
+    if(mine)return mine;
+  }
+  return combat.find(t=>hit(t))||terrain.find(t=>hit(t));
+}
+
+function isMyTurn(){
+  if(!initState.active||!initState.order.length)return true;
+  const cur=initState.order[initState.currentIdx||0];
+  if(!cur||!cur.tokId)return false; // NPC turn
+  const tok=tokens[cur.tokId];
+  return tok&&tok.ownerId===myId;
+}
+
+function canDrag(t){
+  if(!t)return false;
+  if(t.terrain)return myRole==='gm';
+  if(t.monster)return myRole==='gm'; // only GM can drag monsters
+  if(myRole==='gm')return true;
+  if(myRole==='player'&&t.ownerId===myId){
+    return initState.active?isMyTurn():true;
+  }
+  return false;
+}
+
+function onMD(e){
+  if(e.button===2)return;
+  // Map note placement
+  if(mapNoteMode&&myRole==='gm'){
+    const{x,y}=wpos(e.clientX,e.clientY);
+    if(handleMapNoteClick(x,y))return;
+  }
+  // Ping mode — available to all roles
+  if(pingMode){
+    const{x,y}=wpos(e.clientX,e.clientY);
+    pingDbRef.set({x,y,t:Date.now(),from:myName});
+    addPing(x,y,true);
+    pingMode=false;
+    document.getElementById('btn-ping')?.classList.remove('active');
+    $c().style.cursor='crosshair';
+    const hint=document.getElementById('fog-hint');
+    if(hint)hint.style.display='none';
+    return;
+  }
+  // Measure tool
+  if(measureTool&&myRole==='gm'){
+    const{x,y}=wpos(e.clientX,e.clientY);
+    measureStart={x,y};measureEnd={x,y};
+    return;
+  }
+  // Draw tool
+  if(drawTool&&myRole==='gm'){
+    const{x,y}=wpos(e.clientX,e.clientY);
+    currentDraw={type:drawTool,pts:[{x,y}],color:drawColor};
+    return;
+  }
+  // Fog tool takes priority
+  if(fogTool&&myRole==='gm'){
+    fogDrawing=true;
+    const{x,y}=wpos(e.clientX,e.clientY);
+    paintFog(x,y);
+    return;
+  }
+  // If in rotation mode, commit the rotation on left-click
+  if(rotating&&rotStart){
+    const tok=tokens[rotStart.tokId];
+    if(tok){
+      const finalRot=Math.round(tok.rotation||0);
+      tokRef.child(rotStart.tokId).update({rotation:finalRot});
+    }
+    rotating=null;rotStart=null;
+    document.getElementById('canvas-wrap').classList.remove('rotating-mode');
+    $c().style.cursor='crosshair';
+    return;
+  }
+  hideCtx();
+  const{x,y}=wpos(e.clientX,e.clientY);const tok=tokAt(x,y,true);
+  if(tok&&canDrag(tok)){
+    selectedTokId=tok.id;
+    dragging=tok;
+    // Always drag from the token's top-left origin so it drops exactly where it appears
+    dOX=x-tok.x;dOY=y-tok.y;
+    $c().style.cursor='grabbing';
+    // Build group drag — find all tokens in the same group
+    dragGroup=[];
+    if(tok.groupId){
+      Object.values(tokens).filter(t=>t&&!t.terrain&&t.groupId===tok.groupId&&t.id!==tok.id).forEach(t=>{
+        dragGroup.push({tok:t,offX:t.x-tok.x,offY:t.y-tok.y});
+      });
+    }
+  } else {panning=true;panStart={x:e.clientX-panX,y:e.clientY-panY};$c().style.cursor='grabbing'}
+}
+function onMM(e){
+  if(measureTool&&measureStart&&myRole==='gm'){
+    const{x,y}=wpos(e.clientX,e.clientY);
+    measureEnd={x,y};
+    measureRef.set({x1:measureStart.x,y1:measureStart.y,x2:x,y2:y});
+    drawAll();return;
+  }
+  if(drawTool&&currentDraw&&myRole==='gm'){
+    const{x,y}=wpos(e.clientX,e.clientY);
+    currentDraw.pts.push({x,y});
+    drawAll();
+    // Broadcast live stroke to players/observers (throttled 80ms)
+    if(liveDrawFlush)clearTimeout(liveDrawFlush);
+    liveDrawFlush=setTimeout(()=>{if(liveDrawRef&&currentDraw)liveDrawRef.set(currentDraw);},80);
+    return;
+  }
+  if(fogTool&&fogDrawing&&myRole==='gm'){
+    const{x,y}=wpos(e.clientX,e.clientY);
+    paintFog(x,y);
+    return;
+  }
+  if(rotating&&rotStart){
+    const{x,y}=wpos(e.clientX,e.clientY);
+    const tok=tokens[rotStart.tokId];if(!tok)return;
+    const r=(tok.size||gSz)/2;
+    const angle=Math.atan2(y-(tok.y+r),x-(tok.x+r));
+    const delta=(angle-rotStart.startAngle)*180/Math.PI;
+    const newRot=((rotStart.baseRot+delta)%360+360)%360;
+    // Update local preview only
+    tokens[rotStart.tokId]={...tok,rotation:newRot};
+    drawAll();
+    return;
+  }
+  if(dragging){
+    const{x,y}=wpos(e.clientX,e.clientY);
+    dragging._px=x-dOX;
+    dragging._py=y-dOY;
+    dragGroup.forEach(g=>{g.tok._px=dragging._px+g.offX;g.tok._py=dragging._py+g.offY;});
+    drawAll();
+    // Broadcast live position to other clients (throttled 50ms)
+    if(dragBroadcastTimer)clearTimeout(dragBroadcastTimer);
+    dragBroadcastTimer=setTimeout(()=>{
+      if(!dragging||!tokRef)return;
+      tokRef.child(dragging.id).update({_px:dragging._px,_py:dragging._py});
+      dragGroup.forEach(g=>{tokRef.child(g.tok.id).update({_px:g.tok._px,_py:g.tok._py});});
+    },50);
+  } else if(panning&&panStart){panX=e.clientX-panStart.x;panY=e.clientY-panStart.y;drawAll()}
+}
+function onMU(e){
+  if(dragging){
+    const cx=e.clientX!=null?e.clientX:lastTouch.clientX;
+    const cy=e.clientY!=null?e.clientY:lastTouch.clientY;
+    const{x,y}=wpos(cx,cy);let nx=x-dOX,ny=y-dOY;
+    const snapThis=gridOn&&!dragging.freeSnap&&!dragging.terrain;
+    if(snapThis){
+      nx=Math.round(nx/gSz)*gSz;ny=Math.round(ny/gSz)*gSz;
+      // Collision detection — find nearest free square if occupied
+      const{fx,fy}=findFreeSquare(nx,ny,dragging.id,dragGroup.map(g=>g.tok.id));
+      nx=fx;ny=fy;
+    }
+    // Increment zOrder so this token renders on top
+    const newZ=(dragging.zOrder||0)+1;
+    tokRef.child(dragging.id).update({x:nx,y:ny,zOrder:newZ});
+    dragGroup.forEach(g=>{
+      let gx=nx+g.offX,gy=ny+g.offY;
+      if(gridOn&&!g.tok.freeSnap&&!g.tok.terrain){
+        gx=Math.round(gx/gSz)*gSz;gy=Math.round(gy/gSz)*gSz;
+        const{fx,fy}=findFreeSquare(gx,gy,[dragging.id,...dragGroup.map(h=>h.tok.id)]);
+        gx=fx;gy=fy;
+      }
+      tokRef.child(g.tok.id).update({x:gx,y:gy,zOrder:newZ});
+    });
+    if(dragBroadcastTimer){clearTimeout(dragBroadcastTimer);dragBroadcastTimer=null;}
+    const dragId=dragging.id;
+    const dragGroupIds=dragGroup.map(g=>g.tok.id);
+    dragging=null;dragGroup=[];
+    if(tokens[dragId]){delete tokens[dragId]._px;delete tokens[dragId]._py;}
+    dragGroupIds.forEach(id=>{if(tokens[id]){delete tokens[id]._px;delete tokens[id]._py;}});
+    drawAll();
+  }
+  if(measureTool&&measureStart){measureStart=null;measureEnd=null;measureRef.remove();
+    document.getElementById('measure-info').style.display='none';return;}
+  if(drawTool&&currentDraw){
+    if(currentDraw.pts.length>=2){
+      const dRef=drawingsRef.push();dRef.set(currentDraw);
+    }
+    currentDraw=null;
+    if(liveDrawRef)liveDrawRef.remove(); // clear live stroke
+    drawAll();return;
+  }
+  if(fogDrawing){fogDrawing=false;return;}
+  panning=false;panStart=null;
+  if(!fogTool)$c().style.cursor='crosshair';
+}
+
+// Find nearest unoccupied grid square using BFS spiral outward
+function findFreeSquare(nx,ny,excludeIds,extraExclude){
+  const exclude=new Set([...(Array.isArray(excludeIds)?excludeIds:[excludeIds]),...(extraExclude||[])]);
+  // Build set of occupied squares (grid-snapped, non-free combat tokens)
+  const occupied=new Set();
+  Object.values(tokens).forEach(t=>{
+    if(!t||t.terrain||t.freeSnap||exclude.has(t.id))return;
+    const gx=Math.round(t.x/gSz)*gSz;
+    const gy=Math.round(t.y/gSz)*gSz;
+    occupied.add(gx+'_'+gy);
+  });
+  // If target square is free, use it
+  if(!occupied.has(nx+'_'+ny))return{fx:nx,fy:ny};
+  // BFS spiral to find nearest free square
+  for(let r=1;r<=10;r++){
+    for(let dx=-r;dx<=r;dx++){
+      for(let dy=-r;dy<=r;dy++){
+        if(Math.abs(dx)!==r&&Math.abs(dy)!==r)continue;// only edge of ring
+        const cx=nx+dx*gSz,cy=ny+dy*gSz;
+        if(!occupied.has(cx+'_'+cy))return{fx:cx,fy:cy};
+      }
+    }
+  }
+  return{fx:nx,fy:ny};// fallback — just place it there
+}
+function onRC(e){
+  e.preventDefault();const{x,y}=wpos(e.clientX,e.clientY);const tok=tokAt(x,y,true);if(!tok)return;
+  const items=[];
+  const isOwner=myRole==='gm'||(myRole==='player'&&tok.ownerId===myId);
+  if(isOwner&&!tok.terrain){
+    items.push({label:'RENAME',fn:()=>renameTok(tok)});
+    items.push({label:'CHANGE COLOR',fn:()=>changeCol(tok)});
+    // Group options — available to owners
+    const myToks=Object.values(tokens).filter(t=>t&&!t.terrain&&t.ownerId===tok.ownerId&&t.id!==tok.id);
+    if(myToks.length>0){
+      if(tok.groupId){
+        items.push({label:'⛓ UNGROUP',fn:()=>ungroupToken(tok)});
+      } else {
+        items.push({label:'⛓ GROUP WITH...',fn:()=>openGroupModal(tok)});
+      }
+    }
+  }
+  if(myRole==='gm'){
+    items.push({label:'RESIZE',fn:()=>resizeTok(tok)});
+    if(!tok.terrain){
+      items.push({label:'SET HP',fn:()=>openHpModal(tok)});
+      items.push({label:'ADD STATUS',fn:()=>openStatusModal(tok)});
+      items.push({label:'ADD AURA',fn:()=>openAuraModal(tok)});
+      items.push({label:'ADD TO INITIATIVE',fn:()=>quickAddToInit(tok)});
+      if(tok.monster){
+        items.push({label:tok.hidden?'👁 REVEAL TO PLAYERS':'👁 HIDE FROM PLAYERS',fn:()=>tokRef.child(tok.id).update({hidden:!tok.hidden})});
+      } else {
+        items.push({label:tok.hidden?'👁 SHOW TO PLAYERS':'👁 HIDE FROM PLAYERS',fn:()=>tokRef.child(tok.id).update({hidden:!tok.hidden})});
+      }
+      items.push({label:tok.freeSnap?'⊕ ENABLE GRID SNAP':'⊕ FREE MOVE (no snap)',fn:()=>tokRef.child(tok.id).update({freeSnap:!tok.freeSnap})});
+    }
+    if(tok.terrain){
+      items.push({label:'FREE ROTATE',fn:()=>startRotate(tok,e.clientX,e.clientY)});
+      items.push({label:'RESET ROTATION',fn:()=>tokRef.child(tok.id).update({rotation:0})});
+      items.push({label:tok.hidden?'👁 SHOW TO PLAYERS':'👁 HIDE FROM PLAYERS',fn:()=>tokRef.child(tok.id).update({hidden:!tok.hidden})});
+    }
+    items.push({label:'DELETE TOKEN',fn:()=>tokRef.child(tok.id).remove(),danger:true});
+  }
+  if(items.length)showCtx(e.clientX,e.clientY,items);
+}
+
+function startRotate(tok,cx,cy){
+  rotating=tok;
+  // Calculate angle from token center to mouse at start
+  const{x,y}=wpos(cx,cy);
+  const r=(tok.size||gSz)/2;
+  rotStart={tokId:tok.id,baseRot:tok.rotation||0,startAngle:Math.atan2(y-(tok.y+r),x-(tok.x+r))};
+  $c().style.cursor='crosshair';
+  document.getElementById('canvas-wrap').classList.add('rotating-mode');
+}
+function onWh(e){
+  e.preventDefault();const r=$c().getBoundingClientRect();const mx=e.clientX-r.left,my=e.clientY-r.top;
+  const ns=Math.min(5,Math.max(0.1,zoom*(e.deltaY>0?.9:1.1)));
+  panX=mx-(mx-panX)*(ns/zoom);panY=my-(my-panY)*(ns/zoom);zoom=ns;drawAll();
+}
+function onTS(e){
+  e.preventDefault();
+  if(e.touches.length===2){
+    clearLongPress();
+    const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;tdist=Math.hypot(dx,dy);return;
+  }
+  const t=e.touches[0];
+  lastTouch={clientX:t.clientX,clientY:t.clientY};
+  lpFired=false;
+  // Start long-press timer — 600ms triggers context menu
+  lpTimer=setTimeout(()=>{
+    lpFired=true;
+    // Cancel any drag that started
+    dragging=null;panning=false;panStart=null;
+    $c().style.cursor='crosshair';
+    // Fire context menu at touch position
+    onRC({preventDefault:()=>{},clientX:t.clientX,clientY:t.clientY});
+  },600);
+  onMD({button:0,clientX:t.clientX,clientY:t.clientY});
+}
+function clearLongPress(){
+  if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+}
+function onTM(e){
+  e.preventDefault();
+  if(e.touches.length===2&&tdist){
+    clearLongPress();
+    const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY,d=Math.hypot(dx,dy);
+    const mid={x:(e.touches[0].clientX+e.touches[1].clientX)/2,y:(e.touches[0].clientY+e.touches[1].clientY)/2};
+    const r=$c().getBoundingClientRect(),mx=mid.x-r.left,my=mid.y-r.top;
+    const ns=Math.min(5,Math.max(0.1,zoom*(d/tdist)));
+    panX=mx-(mx-panX)*(ns/zoom);panY=my-(my-panY)*(ns/zoom);zoom=ns;tdist=d;drawAll();return;
+  }
+  const t=e.touches[0];
+  // Cancel long press if finger moves more than 10px
+  if(Math.abs(t.clientX-lastTouch.clientX)>10||Math.abs(t.clientY-lastTouch.clientY)>10)clearLongPress();
+  lastTouch={clientX:t.clientX,clientY:t.clientY};
+  onMM({clientX:t.clientX,clientY:t.clientY});
+}
+function onTE(e){
+  clearLongPress();
+  tdist=null;
+  if(lpFired){lpFired=false;return;} // long-press already handled, don't also drop token
+  // changedTouches has the coordinates of the lifted finger
+  if(e.changedTouches&&e.changedTouches.length>0){
+    const t=e.changedTouches[0];
+    onMU({clientX:t.clientX,clientY:t.clientY});
+  } else {
+    onMU({clientX:lastTouch.clientX,clientY:lastTouch.clientY});
+  }
+}
+
+// ── FOG OF WAR ────────────────────────────────────────────
+// Shared tool deactivation — call before activating any tool
+function clearAllTools(){
+  fogTool=null;drawTool=null;measureTool=false;pingMode=false;
+  document.getElementById('btn-fog-paint')?.classList.remove('active');
+  document.getElementById('btn-fog-erase')?.classList.remove('active');
+  document.getElementById('btn-draw')?.classList.remove('active');
+  document.getElementById('btn-draw-arrow')?.classList.remove('active');
+  document.getElementById('btn-measure')?.classList.remove('active');
+  document.getElementById('btn-ping')?.classList.remove('active');
+  const hint=document.getElementById('fog-hint');
+  if(hint)hint.style.display='none';
+  $c().style.cursor='crosshair';
+}
+
+function setFogTool(tool){
+  const same=fogTool===tool;
+  clearAllTools();
+  if(!same){
+    fogTool=tool;
+    document.getElementById(tool==='paint'?'btn-fog-paint':'btn-fog-erase')?.classList.add('active');
+    const hint=document.getElementById('fog-hint');
+    if(hint){
+      hint.textContent=tool==='paint'?'Click & drag to paint fog':'Click & drag to reveal areas';
+      hint.style.display='block';
+    }
+  }
+}
+
+let fogPendingUpdates={};
+let fogFlushTimer=null;
+function paintFog(wx,wy){
+  // Snap to grid cell
+  const cx=Math.floor(wx/gSz),cy=Math.floor(wy/gSz);
+  const key=cx+'_'+cy;
+  if(fogTool==='paint'){
+    fogData[key]=true;
+    fogPendingUpdates[key]=true;
+  } else {
+    delete fogData[key];
+    fogPendingUpdates[key]=null;
+  }
+  drawAll();
+  // Batch writes to Firebase every 150ms to avoid hammering
+  if(fogFlushTimer)clearTimeout(fogFlushTimer);
+  fogFlushTimer=setTimeout(flushFog,150);
+}
+
+function flushFog(){
+  if(!fogRef||!editingSceneId)return;
+  fogRef.update(fogPendingUpdates);
+  fogPendingUpdates={};
+}
+
+function clearAllFog(){
+  if(myRole!=='gm'||!confirm('Clear all fog from this scene?'))return;
+  fogRef.remove();
+}
+
+// ── SCENES ────────────────────────────────────────────────
+function createScene(){
+  const nameEl=document.getElementById('scene-name-in');
+  const name=(nameEl?.value||'').trim();
+  if(!name){nameEl?.focus();return;}
+  const sid='scene-'+uid();
+  sceneRef.child(sid).set({name,createdAt:Date.now()});
+  nameEl.value='';
+  // Switch directly — don't wait for scenes{} to update, sid is known
+  editingSceneId=sid;
+  loadScene(sid);
+  // renderScenePanel will be called when the sceneRef listener fires
+}
+
+function switchEditingScene(sid){
+  // Allow switching even if scenes{} hasn't updated yet (e.g. brand new scene)
+  editingSceneId=sid;
+  loadScene(sid);
+  renderScenePanel();
+}
+
+function setActiveScene(sid){
+  if(!scenes[sid])return;
+  activeSceneRef.set(sid);
+  activeSceneId=sid;
+  renderScenePanel();
+}
+
+function deleteScene(sid){
+  if(!confirm('Delete this scene? This cannot be undone.'))return;
+  if(activeSceneId===sid){alert('Cannot delete the active (live) scene.');return;}
+  sceneRef.child(sid).remove();
+  if(editingSceneId===sid){
+    // Switch GM to active scene
+    editingSceneId=activeSceneId;
+    loadScene(activeSceneId);
+  }
+}
+
+function renderScenePanel(){
+  const panel=document.getElementById('scene-panel');
+  if(!panel)return;
+  panel.style.display=myRole==='gm'?'block':'none';
+  const list=document.getElementById('scene-list');
+  if(!list)return;
+  const sids=Object.keys(scenes).sort((a,b)=>(scenes[a].createdAt||0)-(scenes[b].createdAt||0));
+  if(!sids.length){list.innerHTML='<div class="empty-msg">No scenes yet</div>';return;}
+  list.innerHTML='';
+  sids.forEach(sid=>{
+    const sc=scenes[sid];
+    const isActive=sid===activeSceneId;
+    const isEditing=sid===editingSceneId;
+    const div=document.createElement('div');
+    div.className='srow'+(isEditing?' active-scene':'');
+    const thumb=sc.mapUrl?`<img class="srow-thumb" src="${sc.mapUrl}" onerror="this.style.display='none'">`:`<div class="srow-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:9px">NO MAP</div>`;
+    div.innerHTML=`
+      ${thumb}
+      <span class="srow-name" title="${sc.name}">${sc.name}</span>
+      ${isActive?'<span class="srow-live">LIVE</span>':''}
+      <div class="srow-btns">
+        <button class="srow-btn" onclick="switchEditingScene('${sid}')" title="Edit this scene">EDIT</button>
+        ${!isActive?`<button class="srow-btn go" onclick="setActiveScene('${sid}')" title="Make live for players">GO LIVE</button>`:''}
+        ${!isActive?`<button class="srow-btn del" onclick="deleteScene('${sid}')">✕</button>`:''}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+// ── TOOLBAR ───────────────────────────────────────────────
+function toggleGrid(){if(myRole!=='gm')return;gridOn=!gridOn;setRef.update({gridOn})}
+function updateGS(v){
+  if(myRole!=='gm')return;
+  const newSz=Math.max(20,Math.min(150,parseInt(v)||50));
+  const oldSz=gSz;
+  gSz=newSz;
+  setRef.update({gSz:newSz});
+  const allToks=Object.values(tokens).filter(t=>t&&!t.terrain);
+  if(allToks.length&&newSz!==oldSz){
+    showModal(`
+      <div class="modal-title">GRID SIZE CHANGED</div>
+      <p style="font-size:13px;color:var(--text);line-height:1.6">Grid changed to <strong style="color:var(--gold)">${newSz}px</strong>. Resize tokens to match?</p>
+      <p style="font-size:12px;color:var(--text-muted)">Single-square tokens will resize to ${newSz}px. Multi-square tokens will scale proportionally to keep their relative size.</p>
+    `,[
+      {label:'KEEP SIZES',fn:closeModal},
+      {label:'RESIZE ALL',primary:true,fn:()=>{
+        const updates={};
+        const ratio=newSz/oldSz;
+        allToks.forEach(t=>{
+          const sq=Math.round((t.size||oldSz)/oldSz); // how many squares this token spans
+          if(sq<=1){
+            // Single-square token — snap exactly to new grid size
+            updates[t.id+'/size']=newSz;
+          } else {
+            // Multi-square token — scale proportionally (round to nearest grid multiple)
+            updates[t.id+'/size']=Math.round(sq*newSz);
+          }
+          // Also scale position to keep token on its square
+          updates[t.id+'/x']=Math.round((t.x/oldSz)*newSz);
+          updates[t.id+'/y']=Math.round((t.y/oldSz)*newSz);
+        });
+        tokRef.update(updates);
+        closeModal();
+      }}
+    ]);
+  }
+}
+function updateGridColor(v){if(myRole!=='gm')return;gridColor=v;setRef.update({gridColor:v})}
+function resetView(){panX=0;panY=0;zoom=1;drawAll()}
+
+// ── MAP ───────────────────────────────────────────────────
+function handleMap(e){
+  const f=e.target.files[0];if(!f)return;
+  compress(f,1920,.78,url=>{
+    mapRef.set({url});
+    if(editingSceneId)sceneRef.child(editingSceneId+'/mapUrl').set(url);
+    document.getElementById('stat-msg').textContent='Map uploaded ('+Math.round(url.length/1024)+'KB)';
+  });
+  e.target.value='';
+}
+function compress(file,maxW,q,cb){
+  const r=new FileReader();r.onload=ev=>{const i=new Image();i.onload=()=>{
+    const ratio=Math.min(1,maxW/i.width),oc=document.createElement('canvas');
+    oc.width=Math.round(i.width*ratio);oc.height=Math.round(i.height*ratio);
+    oc.getContext('2d').drawImage(i,0,0,oc.width,oc.height);cb(oc.toDataURL('image/jpeg',q));
+  };i.src=ev.target.result};r.readAsDataURL(file);
+}
+function clearMap(){if(!confirm('Remove the current map image?'))return;mapRef.remove()}
+
+// ── TOKENS ────────────────────────────────────────────────
+// type = 'combat' | 'terrain' | 'player'
+function openTokModal(type){
+  pendImg=null;
+  const isTerrain=type==='terrain';
+  const isMonster=type==='monster';
+  const isPlayer=type==='player';
+  const defaultName=isTerrain?'Wall':isPlayer?myName:isMonster?'Monster':'Token';
+  const defaultColor=isTerrain?'#4c7ec9':isMonster?'#c94c4c':pendCol;
+  const ps=COLS.map(c=>`<div class="cp" style="background:${c}" onclick="pickCol('${c}',this)"></div>`).join('');
+  const title=isTerrain?'ADD TERRAIN / OBJECT':isPlayer?'MY TOKEN':isMonster?'ADD MONSTER':'ADD COMBAT TOKEN';
+  const note=isTerrain
+    ?'<p style="font-size:13px;color:var(--text-muted);font-style:italic">Terrain tokens are for scenery only. Only the GM can move them.</p>'
+    :isMonster
+    ?'<p style="font-size:13px;color:#c97b4c;font-style:italic">Monster tokens are hidden from players until you reveal them.</p>'
+    :'';
+  const sizeRow=(type==='combat'||isTerrain||isMonster)
+    ?`<div class="mlabel">Size (px)</div><input class="fi" id="mt-sz" type="number" value="${isTerrain?gSz*2:gSz}" min="10" max="500" style="width:100%"/>`
+    :'';
+  const initRow=(type==='combat'||isMonster)
+    ?'<div class="chk-row"><input type="checkbox" id="mt-init"/><label for="mt-init">Add to initiative after placing</label></div>'
+    :'';
+  const hiddenRow=isMonster
+    ?'<div class="chk-row"><input type="checkbox" id="mt-hidden" checked/><label for="mt-hidden">Start hidden from players</label></div>'
+    :'';
+  showModal(`
+    <div class="modal-title">${title}</div>
+    ${note}
+    <div class="mlabel">Name</div>
+    <input class="fi" id="mt-n" type="text" value="${defaultName}"/>
+    <div class="mlabel">Color</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <input type="color" id="mt-col" value="${defaultColor}" oninput="pendCol=this.value"/>
+      <div class="cp-row">${isTerrain?'':ps}</div>
+    </div>
+    <div class="mlabel">Token image (optional)</div>
+    <button class="tb-btn" style="width:100%;padding:10px" onclick="document.getElementById('tok-file').click()">UPLOAD IMAGE</button>
+    <div id="mt-img-note" style="font-size:11px;color:var(--text-muted);font-style:italic;min-height:16px"></div>
+    ${sizeRow}${initRow}${hiddenRow}
+  `,[{label:'CANCEL',fn:closeModal},{label:'PLACE',primary:true,fn:()=>placeTok(type)}]);
+}
+
+function pickCol(c,el){pendCol=c;document.getElementById('mt-col').value=c;document.querySelectorAll('.cp').forEach(e=>e.classList.remove('s'));el.classList.add('s')}
+function handleTokImg(e){
+  const f=e.target.files[0];if(!f)return;
+  compress(f,300,.82,url=>{pendImg=url;const el=document.getElementById('mt-img-note');if(el)el.textContent='Image ready: '+f.name});
+  e.target.value='';
+}
+
+function placeTok(type){
+  const isTerrain=type==='terrain';
+  const name=(document.getElementById('mt-n')?.value||'').trim()||(isTerrain?'Terrain':myName);
+  const color=document.getElementById('mt-col')?.value||pendCol;
+  const isMonster=type==='monster';
+  const size=(type==='combat'||isTerrain||isMonster)?parseInt(document.getElementById('mt-sz')?.value)||gSz:gSz;
+  const addInit=type==='combat'&&document.getElementById('mt-init')?.checked;
+  if(!isTerrain)pendCol=color;
+  closeModal();
+  const c=$c(),id=uid();
+  const tok={id,name,color,size,
+    x:Math.round(Math.max(0,(-panX/zoom+c.width/zoom/2-size/2)/gSz))*gSz,
+    y:Math.round(Math.max(0,(-panY/zoom+c.height/zoom/2-size/2)/gSz))*gSz,
+    ownerId:myId,ownerName:myName
+  };
+  if(isTerrain)tok.terrain=true;
+  if(type==='monster'){
+    tok.monster=true;
+    tok.hidden=document.getElementById('mt-hidden')?.checked!==false;
+  }
+  if(pendImg){tok.imageData=pendImg;pendImg=null}
+  if(type==='player')myTokId=id;
+  selectedTokId=id;
+  tokRef.child(id).set(tok);
+  if(addInit)setTimeout(()=>quickAddToInitById(id,name,color,tok.imageData),400);
+}
+
+function renameTok(tok){
+  showModal(`<div class="modal-title">RENAME TOKEN</div><div class="mlabel">New name</div><input class="fi" id="rn-n" type="text" value="${tok.name}"/>`,[
+    {label:'CANCEL',fn:closeModal},{label:'RENAME',primary:true,fn:()=>{const n=(document.getElementById('rn-n')?.value||'').trim();if(n)tokRef.child(tok.id).update({name:n});closeModal()}}
+  ]);
+}
+function changeCol(tok){
+  const ps=COLS.map(c=>`<div class="cp" style="background:${c}" onclick="document.getElementById('cc-c').value='${c}'"></div>`).join('');
+  showModal(`<div class="modal-title">TOKEN COLOR</div><div style="display:flex;align-items:center;gap:10px"><input type="color" id="cc-c" value="${tok.color||'#c94c4c'}" style="width:60px;height:44px"/><div class="cp-row">${ps}</div></div>`,[
+    {label:'CANCEL',fn:closeModal},{label:'APPLY',primary:true,fn:()=>{tokRef.child(tok.id).update({color:document.getElementById('cc-c').value});closeModal()}}
+  ]);
+}
+function resizeTok(tok){
+  showModal(`<div class="modal-title">RESIZE TOKEN</div><div class="mlabel">Size in pixels</div><input class="fi" id="rs-s" type="number" value="${tok.size||gSz}" min="10" max="500"/>`,[
+    {label:'CANCEL',fn:closeModal},{label:'APPLY',primary:true,fn:()=>{const s=parseInt(document.getElementById('rs-s')?.value)||gSz;tokRef.child(tok.id).update({size:s});closeModal()}}
+  ]);
+}
+// rotation handled by startRotate / onMM / onMD
+
+// ── INITIATIVE ────────────────────────────────────────────
+function openInitModal(){
+  if(myRole!=='gm')return;
+  const combatToks=Object.values(tokens).filter(t=>t&&!t.terrain);
+  const scoreMap={};
+  (initState.order||[]).forEach(e=>{if(e.tokId)scoreMap[e.tokId]={score:e.score,checked:true}});
+
+  const rows=combatToks.length?combatToks.map(t=>`
+    <tr>
+      <td style="padding:6px 8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:14px;height:14px;border-radius:50%;background:${t.color||'#888'};flex-shrink:0"></div>
+          <span style="font-size:14px;color:var(--text)">${t.name}</span>
+        </div>
+      </td>
+      <td style="padding:6px 8px"><input type="number" id="isc-${t.id}" value="${scoreMap[t.id]?.score??''}" placeholder="—" min="-20" max="40"/></td>
+      <td style="padding:6px 8px;text-align:center"><input type="checkbox" id="ich-${t.id}" ${scoreMap[t.id]?.checked?'checked':''}/></td>
+    </tr>`).join(''):'<tr><td colspan="3" style="padding:16px;text-align:center;color:var(--text-muted);font-style:italic">No combat tokens on map</td></tr>';
+
+  showModal(`
+    <div class="modal-title">&#9876; INITIATIVE</div>
+    <p style="font-size:13px;color:var(--text-muted)">Enter scores for each token. Uncheck to exclude. Sorted highest first.</p>
+    <table class="init-tbl">
+      <thead><tr><th>TOKEN</th><th>SCORE</th><th>IN?</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="mlabel">Turn timer (seconds, 0 = off)</div>
+    <input class="fi" id="i-timer" type="number" value="${initState.timerSeconds||0}" min="0" max="600" style="width:100px"/>
+    <div class="mlabel">Add NPC / custom entry</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input class="fi" id="i-npc-n" type="text" placeholder="NPC name" style="flex:1;min-width:100px"/>
+      <input class="fi" id="i-npc-s" type="number" placeholder="Score" style="width:80px"/>
+      <button class="tb-btn" onclick="autoRollNpc()" title="Roll d20 + modifier for NPC">&#127922; ROLL</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted)">
+      <span>Modifier:</span>
+      <input class="fi" id="i-npc-mod" type="number" value="0" min="-10" max="20" style="width:60px"/>
+      <span id="i-npc-roll-result" style="font-family:'Cinzel',serif;font-size:11px;color:var(--gold)"></span>
+    </div>
+  `,[{label:'CANCEL',fn:closeModal},{label:'START / UPDATE',primary:true,fn:()=>startCombat(combatToks)}]);
+}
+
+function startCombat(combatToks){
+  const order=[];
+  combatToks.forEach(t=>{
+    const chk=document.getElementById('ich-'+t.id);
+    if(chk?.checked){
+      const sc=parseInt(document.getElementById('isc-'+t.id)?.value)||0;
+      order.push({tokId:t.id,name:t.name,score:sc,color:t.color||'#888',imageData:t.imageData||null});
+    }
+  });
+  const npcName=(document.getElementById('i-npc-n')?.value||'').trim();
+  const npcScore=parseInt(document.getElementById('i-npc-s')?.value)||0;
+  if(npcName)order.push({tokId:'npc-'+uid(),name:npcName,score:npcScore,color:'#888',imageData:null});
+  if(!order.length){alert('No tokens added to initiative!');return}
+  order.sort((a,b)=>b.score-a.score);
+  // preserve current position if possible
+  const prevCur=initState.order[initState.currentIdx||0];
+  let newIdx=0;
+  if(prevCur){const fi=order.findIndex(e=>e.tokId===prevCur.tokId);if(fi>=0)newIdx=fi}
+  closeModal();
+  const timerSec=parseInt(document.getElementById('i-timer')?.value)||0;
+  initRef.set({active:true,order,currentIdx:newIdx,timerSeconds:timerSec});
+  if(timerSec>0)startTurnTimer(timerSec);
+}
+
+function quickAddToInit(tok){
+  showModal(`
+    <div class="modal-title">ADD TO INITIATIVE</div>
+    <div class="mlabel">Initiative score for ${tok.name}</div>
+    <input class="fi" id="qa-sc" type="number" placeholder="e.g. 15" min="-20" max="40"/>
+  `,[{label:'CANCEL',fn:closeModal},{label:'ADD',primary:true,fn:()=>{
+    const sc=parseInt(document.getElementById('qa-sc')?.value)||0;
+    addEntryToOrder({tokId:tok.id,name:tok.name,score:sc,color:tok.color||'#888',imageData:tok.imageData||null});
+    closeModal();
+  }}]);
+}
+function quickAddToInitById(id,name,color,imageData){
+  showModal(`
+    <div class="modal-title">ADD TO INITIATIVE</div>
+    <div class="mlabel">Initiative score for ${name}</div>
+    <input class="fi" id="qa-sc" type="number" placeholder="e.g. 15" min="-20" max="40"/>
+  `,[{label:'SKIP',fn:closeModal},{label:'ADD',primary:true,fn:()=>{
+    const sc=parseInt(document.getElementById('qa-sc')?.value)||0;
+    addEntryToOrder({tokId:id,name,score:sc,color:color||'#888',imageData:imageData||null});
+    closeModal();
+  }}]);
+}
+function addEntryToOrder(entry){
+  const order=[...(initState.order||[])];
+  const ei=order.findIndex(e=>e.tokId===entry.tokId);
+  if(ei>=0)order.splice(ei,1);
+  order.push(entry);
+  order.sort((a,b)=>b.score-a.score);
+  initRef.update({order,active:initState.active||false});
+}
+
+function nextTurn(){
+  if(myRole!=='gm')return;
+  const len=initState.order.length;if(!len)return;
+  tickStatusCounters();
+  const next=((initState.currentIdx||0)+1)%len;
+  initRef.update({currentIdx:next});
+  if(initState.timerSeconds)startTurnTimer(initState.timerSeconds);
+  else stopTurnTimer();
+}
+
+function endCombat(){
+  if(myRole!=='gm'||!confirm('End combat and clear initiative?'))return;
+  initRef.set({active:false,order:[],currentIdx:0,timerSeconds:0});
+  stopTurnTimer();
+}
+
+function editInitEntry(idx){
+  if(myRole!=='gm')return;
+  const e=initState.order[idx];if(!e)return;
+  showModal(`
+    <div class="modal-title">EDIT ENTRY</div>
+    <div class="mlabel">Name</div><input class="fi" id="ei-n" type="text" value="${e.name}"/>
+    <div class="mlabel">Score</div><input class="fi" id="ei-s" type="number" value="${e.score}"/>
+  `,[{label:'CANCEL',fn:closeModal},{label:'SAVE',primary:true,fn:()=>{
+    const order=[...initState.order];
+    order[idx]={...order[idx],name:(document.getElementById('ei-n')?.value||e.name).trim(),score:parseInt(document.getElementById('ei-s')?.value)||0};
+    order.sort((a,b)=>b.score-a.score);
+    initRef.update({order,currentIdx:0});closeModal();
+  }}]);
+}
+function removeInitEntry(idx){
+  const order=[...initState.order];order.splice(idx,1);
+  let cur=Math.min(initState.currentIdx||0,Math.max(0,order.length-1));
+  initRef.update({order,currentIdx:cur});
+}
+
+function renderInitPanel(){
+  const list=document.getElementById('init-list');
+  const badge=document.getElementById('init-badge');
+  const footer=document.getElementById('init-footer');
+  const btnInit=document.getElementById('btn-init');
+  const order=initState.order||[];
+  const active=initState.active;
+  badge.style.display=active?'inline':'none';
+  footer.style.display=active?'flex':'none';
+  if(btnInit)btnInit.classList.toggle('init-active',active);
+  if(!order.length){list.innerHTML='<div id="init-empty" class="empty-msg">No initiative — GM clicks &#9876; INITIATIVE</div>';return}
+  list.innerHTML='';
+  const curIdx=initState.currentIdx||0;
+  order.forEach((entry,i)=>{
+    const isCur=active&&i===curIdx;
+    const div=document.createElement('div');div.className='irow'+(isCur?' cur':'');
+    const av=entry.imageData
+      ?`<img src="${entry.imageData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+      :`<span>${(entry.name||'?').slice(0,2).toUpperCase()}</span>`;
+    div.innerHTML=`
+      <div class="iav" style="background:${entry.color||'#888'};border-color:${entry.color||'#888'}66">${av}</div>
+      <div class="iscore">${entry.score}</div>
+      <div class="iname">${entry.name}</div>
+      ${isCur?'<div class="iturn">&#9654;</div>':''}
+      ${myRole==='gm'?`<button class="iedit" title="Edit" onclick="editInitEntry(${i})">✎</button><button class="idel" title="Remove" onclick="removeInitEntry(${i})">✕</button>`:''}
+    `;
+    if(isCur)setTimeout(()=>div.scrollIntoView({block:'nearest',behavior:'smooth'}),50);
+    list.appendChild(div);
+  });
+}
+
+function updateBanners(){
+  const banner=document.getElementById('turn-banner');
+  const lock=document.getElementById('lock-banner');
+  const order=initState.order||[];
+  if(!initState.active||!order.length){banner.style.display='none';lock.style.display='none';return}
+  const cur=order[initState.currentIdx||0];
+  banner.textContent=(cur?cur.name:"?")+' — YOUR TURN';
+  banner.style.display='block';
+  if(myRole==='player'){
+    lock.style.display=isMyTurn()?'none':'block';
+  } else {lock.style.display='none'}
+}
+
+// ── SIDEBAR ───────────────────────────────────────────────
+function renderSidebar(){
+  const list=document.getElementById('token-list');
+  const toks=Object.values(tokens).filter(Boolean);
+  list.innerHTML='';
+
+  // Decide what each role sees in the sidebar
+  // GM: everything (terrain, monsters, player tokens, hidden)
+  // Player: only combat tokens owned by players (not terrain, not monsters, not hidden unless theirs)
+  // Observer: nothing (sidebar hidden)
+
+  const visible=toks.filter(tok=>{
+    if(myRole==='gm')return true; // GM sees everything in sidebar
+    if(myRole==='observer')return false;
+    // Players: no terrain, no hidden tokens (unless their own)
+    if(tok.terrain)return false;
+    if(tok.hidden&&tok.ownerId!==myId)return false;
+    return true;
+  });
+
+  if(!visible.length){
+    list.innerHTML='<div class="empty-msg">No tokens on the map</div>';
+    renderConditionTracker();return;
+  }
+
+  // GM sees terrain first, then monsters, then players
+  const ordered=myRole==='gm'
+    ? [...toks.filter(t=>t.terrain),...toks.filter(t=>t.monster&&!t.terrain),...toks.filter(t=>!t.terrain&&!t.monster)]
+    : visible;
+
+  ordered.forEach(tok=>{
+    if(!visible.includes(tok))return;
+    const div=document.createElement('div');div.className='tok-item';
+    const isRound=!tok.terrain;
+    const canDel=myRole==='gm'||(myRole==='player'&&tok.ownerId===myId&&!tok.terrain);
+    const av=tok.imageData
+      ?`<img src="${tok.imageData}" style="width:100%;height:100%;object-fit:cover;border-radius:${isRound?'50%':'3px'}">`
+      :`<span style="color:#fff;font-size:10px">${(tok.name||'?').slice(0,2).toUpperCase()}</span>`;
+    const hiddenBadge=tok.hidden?'<span class="tok-hidden-badge">👁</span>':'';
+    const deadBadge=(tok.hpMax&&(tok.hpCur!=null?tok.hpCur:tok.hpMax)<=0)?'<span style="font-size:10px">☠</span>':'';
+    let typeBadge='';
+    if(tok.terrain)typeBadge='<span class="tbadge">TERRAIN</span>';
+    else if(tok.monster)typeBadge='<span class="tbadge-monster">MONSTER</span>';
+    div.innerHTML=`
+      <div class="tok-av" style="background:${tok.color||'#888'};border-color:${tok.color||'#888'}66;border-radius:${isRound?'50%':'3px'}">${av}</div>
+      <div class="tok-inf">
+        <div class="tok-n">${tok.name||'?'}${hiddenBadge}${deadBadge}</div>
+        <div class="tok-o">${typeBadge||tok.ownerName||''}</div>
+      </div>
+      ${canDel?`<button class="tok-del" onclick="event.stopPropagation();tokRef.child('${tok.id}').remove()">&#10005;</button>`:''}
+    `;
+    div.onclick=()=>{const r=(tok.size||gSz)/2;panX=-(tok.x+r)*zoom+$c().width/2;panY=-(tok.y+r)*zoom+$c().height/2;drawAll()};
+    list.appendChild(div);
+  });
+  renderConditionTracker();
+}
+
+function renderConditionTracker(){
+  if(myRole!=='gm')return;
+  const panel=document.getElementById('condition-panel');
+  const list=document.getElementById('condition-list');
+  if(!panel||!list)return;
+  panel.style.display='block';
+  const toksWithStatus=Object.values(tokens).filter(t=>t&&!t.terrain&&t.statuses&&t.statuses.length);
+  if(!toksWithStatus.length){list.innerHTML='<div class="empty-msg" style="font-size:11px">No active conditions</div>';return;}
+  list.innerHTML='';
+  toksWithStatus.forEach(tok=>{
+    const div=document.createElement('div');div.className='cond-row';
+    const statusHtml=tok.statuses.map(s=>`<span class="cond-status">${s.icon} ${s.label}${s.rounds!=null?' ('+s.rounds+'r)':''}</span>`).join('');
+    div.innerHTML=`<span class="cond-tok">${tok.name}</span><div class="cond-statuses">${statusHtml}</div>`;
+    list.appendChild(div);
+  });
+}
+
+function toggleConditionPanel(){
+  const list=document.getElementById('condition-list');
+  const icon=document.getElementById('cond-toggle-icon');
+  if(!list)return;
+  const open=list.style.display==='block';
+  list.style.display=open?'none':'block';
+  if(icon)icon.textContent=open?'▼':'▲';
+}
+
+// ── CTX MENU ──────────────────────────────────────────────
+function showCtx(x,y,items){
+  const m=document.getElementById('ctx-menu');m.innerHTML='';
+  items.forEach(item=>{const d=document.createElement('div');d.className='ctx-item'+(item.danger?' danger':'');d.textContent=item.label;d.onclick=()=>{hideCtx();item.fn()};m.appendChild(d)});
+  m.style.display='block';m.style.left=Math.min(x,window.innerWidth-180)+'px';m.style.top=Math.min(y,window.innerHeight-items.length*38)+'px';
+}
+function hideCtx(){document.getElementById('ctx-menu').style.display='none'}
+document.addEventListener('click',hideCtx);
+
+// ── MODAL ─────────────────────────────────────────────────
+function showModal(bodyHtml,buttons){
+  const btns=buttons.map((b,i)=>`<button class="${b.primary?'primary':''}" id="_b${i}">${b.label}</button>`).join('');
+  document.getElementById('modal-wrap').innerHTML=`<div class="modal-bg"><div class="modal">${bodyHtml}<div class="modal-btns">${btns}</div></div></div>`;
+  buttons.forEach((b,i)=>{document.getElementById('_b'+i).onclick=b.fn});
+  setTimeout(()=>{const inp=document.querySelector('#modal-wrap input[type=text],#modal-wrap input[type=number]');if(inp)inp.focus()},50);
+}
+function closeModal(){document.getElementById('modal-wrap').innerHTML=''}
+
+// ── TOKEN CLONING ─────────────────────────────────────────
+function offerTokenClone(){
+  const prev=Object.values(prevSceneTokens).filter(Boolean);
+  if(!prev.length)return;
+
+  // Filter what this role can clone
+  let clonable=[];
+  if(myRole==='gm'){
+    // GM can clone player tokens and monster tokens (not terrain)
+    clonable=prev.filter(t=>!t.terrain);
+  } else if(myRole==='player'){
+    // Players can only clone their own tokens
+    clonable=prev.filter(t=>!t.terrain&&!t.monster&&t.ownerId===myId);
+  }
+  if(!clonable.length)return;
+
+  const rows=clonable.map(t=>{
+    const isMonster=t.monster;
+    const badge=isMonster
+      ?'<span class="tbadge-monster" style="font-size:8px">MONSTER</span>'
+      :'<span style="font-family:Cinzel,serif;font-size:8px;color:#7ab0f5">PLAYER</span>';
+    const av=t.imageData
+      ?`<img src="${t.imageData}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+      :`<div style="width:22px;height:22px;border-radius:50%;background:${t.color||'#888'};display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0">${(t.name||'?').slice(0,2).toUpperCase()}</div>`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <input type="checkbox" id="clone-${t.id}" checked style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer;flex-shrink:0"/>
+      ${av}
+      <span style="flex:1;font-size:13px;color:var(--text)">${t.name}</span>
+      ${badge}
+    </div>`;
+  }).join('');
+
+  const who=myRole==='gm'?'the previous scene':'your previous token';
+  showModal(`
+    <div class="modal-title">&#9876; NEW SCENE</div>
+    <p style="font-size:13px;color:var(--text-muted);line-height:1.6">This scene has no tokens yet. Would you like to carry tokens over from the previous scene?</p>
+    <div style="max-height:260px;overflow-y:auto;margin:4px 0">${rows}</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+      <input type="checkbox" id="clone-reset-pos" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer"/>
+      <label for="clone-reset-pos" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;color:var(--text-muted);cursor:pointer">Reset positions to map centre</label>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="checkbox" id="clone-resize" checked style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer"/>
+      <label for="clone-resize" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:1px;color:var(--text-muted);cursor:pointer">Resize tokens to current grid size (${gSz}px)</label>
+    </div>
+  `,[
+    {label:'SKIP',fn:()=>{prevSceneTokens={};closeModal();}},
+    {label:'CARRY OVER',primary:true,fn:()=>cloneTokens(clonable)}
+  ]);
+}
+
+function cloneTokens(clonable){
+  const resetPos=document.getElementById('clone-reset-pos')?.checked;
+  const resizeToGrid=document.getElementById('clone-resize')?.checked;
+  const c=$c();
+  const cx=Math.round((-panX/zoom+c.width/zoom/2)/gSz)*gSz;
+  const cy=Math.round((-panY/zoom+c.height/zoom/2)/gSz)*gSz;
+  let offset=0;
+  clonable.forEach(t=>{
+    const checked=document.getElementById('clone-'+t.id)?.checked;
+    if(!checked)return;
+    const newId=uid();
+    const newTok={...t};
+    delete newTok._px;delete newTok._py;delete newTok._iw;delete newTok._ih;
+    newTok.id=newId;
+    // Resize to current grid size if requested
+    if(resizeToGrid)newTok.size=gSz;
+    if(resetPos){
+      const sz=newTok.size||gSz;
+      newTok.x=cx+offset;
+      newTok.y=cy;
+      offset+=Math.round(sz/gSz)*gSz;
+    }
+    tokRef.child(newId).set(newTok);
+    if(myRole==='player'&&t.ownerId===myId)myTokId=newId;
+  });
+  prevSceneTokens={};
+  closeModal();
+}
+
+// ── ACTIVE PLAYERS PANEL ──────────────────────────────
+function renderPlayersPanel(){
+  const list=document.getElementById('players-list');
+  if(!list)return;
+  const users=Object.values(allPresence).filter(Boolean);
+  if(!users.length){
+    list.innerHTML='<div class="empty-msg" style="font-size:11px">No one connected</div>';
+    return;
+  }
+  list.innerHTML='';
+  // Sort: GM first, then players, then observers
+  const order={gm:0,player:1,observer:2};
+  users.sort((a,b)=>(order[a.role]||1)-(order[b.role]||1));
+  users.forEach(u=>{
+    const isMe=Object.entries(allPresence).find(([id,v])=>v===u&&id===myId);
+    const roleColor={gm:'var(--gold)',player:'#7ab0f5',observer:'#888'}[u.role]||'#888';
+    const roleName={gm:'GM',player:'PLAYER',observer:'OBS'}[u.role]||u.role;
+    const div=document.createElement('div');div.className='player-row';
+    div.innerHTML=`
+      <div class="player-av" style="border-color:${roleColor}55;color:${roleColor}">${(u.name||'?').slice(0,1).toUpperCase()}</div>
+      <span class="player-name" style="color:${isMe?'var(--gold)':''}">${u.name||'Unknown'}${isMe?' (you)':''}</span>
+      <span class="player-role-badge" style="color:${roleColor};border:1px solid ${roleColor}44;background:${roleColor}11">${roleName}</span>
+    `;
+    list.appendChild(div);
+  });
+}
+
+let toastTimer=null;
+function showJoinToast(name,role){
+  const el=document.getElementById('join-toast');
+  if(!el)return;
+  const icon={gm:'👑',player:'⚔',observer:'👁'}[role]||'⚔';
+  el.textContent=icon+' '+name+' joined the room';
+  el.style.display='block';
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{el.style.display='none';},3000);
+}
+
+// ── WEATHER ────────────────────────────────────────────────
+function setWeather(effect){
+  if(myRole!=='gm')return;
+  weatherRef.set(effect);
+}
+
+function startWeather(effect){
+  if(weatherRaf){cancelAnimationFrame(weatherRaf);weatherRaf=null;}
+  weatherParticles=[];
+  const wc=document.getElementById('weather-canvas');
+  if(!wc)return;
+  const wrap=$w();
+  wc.width=wrap.clientWidth;wc.height=wrap.clientHeight;
+  if(effect==='none'){wc.style.display='none';return;}
+  wc.style.display='block';
+  const count={rain:180,snow:120,fog:30,fire:120,darkness:1}[effect]||0;
+  for(let i=0;i<count;i++)weatherParticles.push(makeParticle(effect,wc,true));
+  animateWeather(effect,wc);
+}
+
+function makeParticle(effect,wc,random){
+  const x=Math.random()*wc.width;
+  const y=random?Math.random()*wc.height:-20;
+  if(effect==='rain'){
+    return{x,y:random?Math.random()*wc.height:-20,
+      speed:14+Math.random()*8,len:12+Math.random()*8,drift:2,
+      ground:20+Math.random()*(wc.height-20),
+      splash:false,splashLife:0,splashMaxLife:0,sx:0,sy:0};
+  }
+  if(effect==='snow')return{x,y,speed:0.8+Math.random()*1.2,r:2+Math.random()*3,drift:Math.sin(Math.random()*Math.PI*2),phase:Math.random()*Math.PI*2};
+  if(effect==='fog')return{x:Math.random()*wc.width,y:Math.random()*wc.height,r:80+Math.random()*120,speed:0.2+Math.random()*0.3,alpha:0.04+Math.random()*0.08};
+  if(effect==='fire'){
+    return{x:Math.random()*wc.width,y:Math.random()*wc.height,
+      vx:(Math.random()-0.5)*1.2,vy:-(0.4+Math.random()*1.2),
+      size:1.5+Math.random()*3.5,
+      life:Math.floor(Math.random()*80),maxLife:60+Math.random()*80,
+      flicker:Math.random()*Math.PI*2};
+  }
+  return{x:0,y:0};
+}
+
+function animateWeather(effect,wc){
+  const ctx=wc.getContext('2d');
+  ctx.clearRect(0,0,wc.width,wc.height);
+  const w=wc.width,h=wc.height;
+  if(effect==='darkness'){
+    ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,w,h);
+  } else if(effect==='rain'){
+    weatherParticles.forEach(p=>{
+      if(p.splash){
+        const prog=p.splashLife/p.splashMaxLife;
+        const radius=prog*10;
+        const alpha=(1-prog)*0.6;
+        ctx.beginPath();
+        ctx.ellipse(p.sx,p.sy,radius,radius*0.3,0,0,Math.PI*2);
+        ctx.strokeStyle='rgba(174,214,241,'+alpha+')';
+        ctx.lineWidth=0.8;ctx.stroke();
+        p.splashLife++;
+        if(p.splashLife>=p.splashMaxLife){
+          p.splash=false;p.x=Math.random()*w;p.y=-20;
+          p.ground=20+Math.random()*(h-20);
+        }
+      } else {
+        ctx.strokeStyle='rgba(174,214,241,0.45)';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+p.drift,p.y+p.len);ctx.stroke();
+        p.y+=p.speed;p.x+=p.drift*0.4;
+        if(p.y>=p.ground){
+          p.splash=true;p.sx=p.x;p.sy=p.ground;
+          p.splashLife=0;p.splashMaxLife=8+Math.floor(Math.random()*8);
+        }
+      }
+    });
+  } else if(effect==='snow'){
+    ctx.fillStyle='rgba(255,255,255,0.82)';
+    weatherParticles.forEach(p=>{
+      p.phase+=0.02;p.x+=Math.sin(p.phase)*0.6;p.y+=p.speed;
+      if(p.y>h){p.y=-10;p.x=Math.random()*w;}
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+    });
+  } else if(effect==='fog'){
+    weatherParticles.forEach(p=>{
+      ctx.beginPath();
+      const grad=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+      grad.addColorStop(0,'rgba(200,210,220,'+p.alpha+')');
+      grad.addColorStop(1,'rgba(200,210,220,0)');
+      ctx.fillStyle=grad;ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+      p.x+=p.speed;if(p.x-p.r>w){p.x=-p.r;p.y=Math.random()*h;}
+    });
+  } else if(effect==='fire'){
+    weatherParticles.forEach(p=>{
+      p.life++;p.flicker+=0.15;
+      p.x+=p.vx+Math.sin(p.flicker)*0.4;
+      p.y+=p.vy;
+      p.vx+=(Math.random()-0.5)*0.05;
+      const ratio=p.life/p.maxLife;
+      const alpha=(ratio<0.2?ratio/0.2:ratio>0.8?(1-ratio)/0.2:1)*0.75;
+      const sz=p.size*(1-ratio*0.4);
+      const gv=Math.floor(120*(1-ratio));
+      ctx.beginPath();ctx.arc(p.x,p.y,sz,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,'+gv+',0,'+alpha+')';ctx.fill();
+      ctx.beginPath();ctx.arc(p.x,p.y,sz*0.4,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,240,180,'+(alpha*0.8)+')';ctx.fill();
+      if(p.life>=p.maxLife||p.x<-20||p.x>w+20||p.y<-20){
+        Object.assign(p,makeParticle('fire',wc,true));
+      }
+    });
+  }
+  weatherRaf=requestAnimationFrame(()=>animateWeather(effect,wc));
+}
+
+// ── MAP NOTES ──────────────────────────────────────────────
+function toggleMapNoteMode(){
+  mapNoteMode=!mapNoteMode;
+  const hint=document.getElementById('fog-hint');
+  if(hint){hint.textContent=mapNoteMode?'Click on map to place a note':'';hint.style.display=mapNoteMode?'block':'none';}
+  $c().style.cursor=mapNoteMode?'cell':'crosshair';
+}
+
+function placeMapNote(wx,wy){
+  showModal(`
+    <div class="modal-title">&#128204; MAP NOTE</div>
+    <div class="mlabel">Note text (GM only)</div>
+    <textarea class="fi" id="mn-text" rows="4" placeholder="Room description, encounter trigger, treasure..." style="resize:vertical"></textarea>
+    <div class="mlabel">Label (shown on map)</div>
+    <input class="fi" id="mn-label" type="text" placeholder="e.g. 1" maxlength="3"/>
+  `,[{label:'CANCEL',fn:closeModal},{label:'PLACE',primary:true,fn:()=>{
+    const text=(document.getElementById('mn-text')?.value||'').trim();
+    const label=(document.getElementById('mn-label')?.value||'?').trim();
+    if(!text&&!label){closeModal();return;}
+    const id='note-'+uid();
+    mapNotesRef.child(id).set({id,x:wx,y:wy,text,label,t:Date.now()});
+    closeModal();
+  }}]);
+}
+
+function viewMapNote(note){
+  if(myRole!=='gm')return;
+  showModal(`
+    <div class="modal-title">&#128204; NOTE — ${note.label}</div>
+    <p style="font-size:14px;color:var(--text);line-height:1.6;white-space:pre-wrap">${note.text||'(no text)'}</p>
+  `,[
+    {label:'DELETE',fn:()=>{mapNotesRef.child(note.id).remove();closeModal();}},
+    {label:'CLOSE',primary:true,fn:closeModal}
+  ]);
+}
+
+function renderMapNotes(){
+  // Remove existing note markers
+  document.querySelectorAll('.map-note-marker').forEach(e=>e.remove());
+  if(myRole!=='gm')return; // only GM sees notes
+  const wrap=$w();
+  Object.values(mapNotes).filter(Boolean).forEach(note=>{
+    const el=document.createElement('div');
+    el.className='map-note-marker';
+    el.textContent=note.label||'?';
+    el.title=note.text||'';
+    el.onclick=(e)=>{e.stopPropagation();viewMapNote(note);};
+    // Position in screen space
+    const sx=note.x*zoom+panX;
+    const sy=note.y*zoom+panY;
+    el.style.left=sx+'px';el.style.top=sy+'px';
+    wrap.appendChild(el);
+  });
+}
+
+// Map note markers need re-positioning on pan/zoom — call from drawAll
+// Attach note placement to canvas click when in note mode
+function handleMapNoteClick(wx,wy){
+  if(!mapNoteMode||myRole!=='gm')return false;
+  placeMapNote(wx,wy);
+  mapNoteMode=false;
+  $c().style.cursor='crosshair';
+  const hint=document.getElementById('fog-hint');
+  if(hint)hint.style.display='none';
+  return true;
+}
+
+// ── NPC AUTO-ROLL ──────────────────────────────────────────
+function autoRollNpc(){
+  const mod=parseInt(document.getElementById('i-npc-mod')?.value)||0;
+  const roll=Math.floor(Math.random()*20)+1;
+  const total=roll+mod;
+  const resultEl=document.getElementById('i-npc-roll-result');
+  if(resultEl)resultEl.textContent=`d20(${roll}) + ${mod} = ${total}`;
+  const scoreEl=document.getElementById('i-npc-s');
+  if(scoreEl)scoreEl.value=total;
+}
+
+// ── TOKEN GROUPING ────────────────────────────────────────
+function openGroupModal(tok){
+  const candidates=Object.values(tokens).filter(t=>
+    t&&!t.terrain&&t.ownerId===tok.ownerId&&t.id!==tok.id
+  );
+  if(!candidates.length){alert('No other tokens to group with.');return;}
+  const gid=tok.groupId;
+  const rows=candidates.map(t=>{
+    const alreadyInGroup=gid&&t.groupId===gid;
+    const inOtherGroup=t.groupId&&t.groupId!==gid;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <input type="checkbox" id="grp-${t.id}" ${alreadyInGroup?'checked':''} ${inOtherGroup?'disabled title="Already in another group"':''} style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer;flex-shrink:0"/>
+      <div style="width:22px;height:22px;border-radius:50%;background:${t.color||'#888'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff">${(t.name||'?').slice(0,2).toUpperCase()}</div>
+      <span style="flex:1;font-size:14px;color:${inOtherGroup?'var(--text-muted)':'var(--text)'}">${t.name}${inOtherGroup?' <span style="font-size:10px">(other group)</span>':''}</span>
+    </div>`;
+  }).join('');
+  showModal(`
+    <div class="modal-title">&#9883; GROUP TOKENS</div>
+    <p style="font-size:13px;color:var(--text-muted)">Tick the tokens to move together with <strong style="color:var(--gold)">${tok.name}</strong>. Drag any one to move all.</p>
+    <div style="max-height:280px;overflow-y:auto">${rows}</div>
+    ${gid?`<button class="tb-btn danger" style="width:100%;padding:10px;margin-top:8px" onclick="ungroupToken(tokens['${tok.id}']);closeModal()">⛓ UNGROUP ALL</button>`:''}
+  `,[
+    {label:'CANCEL',fn:closeModal},
+    {label:'SAVE GROUP',primary:true,fn:()=>saveGroup(tok,candidates)}
+  ]);
+}
+
+function saveGroup(leader,candidates){
+  // Collect all checked tokens
+  const selected=candidates.filter(t=>document.getElementById('grp-'+t.id)?.checked&&!t.groupId||
+    document.getElementById('grp-'+t.id)?.checked&&t.groupId===leader.groupId);
+  // Use existing groupId or make a new one
+  const gid=leader.groupId||('grp-'+uid());
+  const updates={};
+  // Add leader and all selected tokens to the group
+  updates[leader.id+'/groupId']=selected.length>0?gid:null;
+  candidates.forEach(t=>{
+    const checked=document.getElementById('grp-'+t.id)?.checked;
+    // Only touch tokens in this group or being added — don't touch other groups
+    if(t.groupId&&t.groupId!==gid)return;
+    updates[t.id+'/groupId']=checked?gid:null;
+  });
+  // If nothing selected, remove leader from group too
+  if(!selected.length)updates[leader.id+'/groupId']=null;
+  tokRef.update(updates);
+  closeModal();
+}
+
+function addToGroup(leaderId,followerId){
+  const leader=tokens[leaderId];
+  const follower=tokens[followerId];
+  if(!leader||!follower)return;
+  const gid=leader.groupId||('grp-'+uid());
+  const updates={};
+  updates[leaderId+'/groupId']=gid;
+  updates[followerId+'/groupId']=gid;
+  tokRef.update(updates);
+}
+
+function ungroupToken(tok){
+  if(!tok||!tok.groupId)return;
+  const gid=tok.groupId;
+  const inGroup=Object.values(tokens).filter(t=>t&&t.groupId===gid);
+  const updates={};
+  inGroup.forEach(t=>{updates[t.id+'/groupId']=null;});
+  tokRef.update(updates);
+}
+
+// ── ZOOM FIT ──────────────────────────────────────────────
+function zoomFit(){
+  const c=$c();
+  if(mapImg){
+    const scaleX=c.width/mapImg.width;
+    const scaleY=c.height/mapImg.height;
+    zoom=Math.min(scaleX,scaleY)*0.95;
+    panX=(c.width-mapImg.width*zoom)/2;
+    panY=(c.height-mapImg.height*zoom)/2;
+  } else {
+    zoom=1;panX=0;panY=0;
+  }
+  drawAll();
+}
+
+// ── DRAW TOOL ─────────────────────────────────────────────
+function setDrawTool(tool){
+  const same=drawTool===tool;
+  clearAllTools();
+  if(!same){
+    drawTool=tool;
+    document.getElementById(tool==='draw'?'btn-draw':'btn-draw-arrow')?.classList.add('active');
+    const hint=document.getElementById('fog-hint');
+    if(hint){
+      hint.textContent=tool==='draw'?'Click & drag to draw freely':'Click & drag to draw an arrow';
+      hint.style.display='block';
+    }
+  }
+}
+function clearDrawings(){if(!confirm('Clear all drawings?'))return;drawingsRef.remove();}
+
+// ── MEASURE TOOL ──────────────────────────────────────────
+function setMeasureTool(){
+  const same=measureTool;
+  clearAllTools();
+  if(!same){
+    measureTool=true;
+    document.getElementById('btn-measure')?.classList.add('active');
+    const hint=document.getElementById('fog-hint');
+    if(hint){hint.textContent='Click & drag to measure distance';hint.style.display='block';}
+  }
+}
+
+// ── PING ──────────────────────────────────────────────────
+function pingMap(){
+  const same=pingMode;
+  clearAllTools();
+  if(!same){
+    pingMode=true;
+    document.getElementById('btn-ping')?.classList.add('active');
+    const hint=document.getElementById('fog-hint');
+    if(hint){hint.textContent='Click on the map to ping';hint.style.display='block';}
+  }
+}
+function addPing(x,y,isLocal){
+  const id=uid();
+  pings.push({id,x,y,t:Date.now()});
+  requestAnimationFrame(()=>drawPings());
+}
+
+// ── HP SYSTEM (GM only) ───────────────────────────────────
+function openHpModal(tok){
+  showModal(`
+    <div class="modal-title">SET HP — ${tok.name}</div>
+    <div class="mlabel">Max HP</div>
+    <input class="fi" id="hp-max" type="number" value="${tok.hpMax||''}" min="1" max="9999" placeholder="e.g. 45"/>
+    <div class="mlabel">Current HP</div>
+    <input class="fi" id="hp-cur" type="number" value="${tok.hpCur!=null?tok.hpCur:(tok.hpMax||'')}" min="0" max="9999" placeholder="e.g. 45"/>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="tb-btn" onclick="adjustHp('${tok.id}',-5)">-5</button>
+      <button class="tb-btn" onclick="adjustHp('${tok.id}',-1)">-1</button>
+      <button class="tb-btn" onclick="adjustHp('${tok.id}',1)">+1</button>
+      <button class="tb-btn" onclick="adjustHp('${tok.id}',5)">+5</button>
+      <button class="tb-btn" onclick="adjustHp('${tok.id}',10)">+10</button>
+    </div>
+  `,[
+    {label:'REMOVE HP',fn:()=>{tokRef.child(tok.id).update({hpMax:null,hpCur:null});closeModal();}},
+    {label:'CANCEL',fn:closeModal},
+    {label:'SAVE',primary:true,fn:()=>{
+      const max=parseInt(document.getElementById('hp-max')?.value)||0;
+      const cur=parseInt(document.getElementById('hp-cur')?.value)??max;
+      tokRef.child(tok.id).update({hpMax:max,hpCur:cur});closeModal();
+    }}
+  ]);
+}
+function adjustHp(tokId,delta){
+  const tok=tokens[tokId];if(!tok)return;
+  const cur=(tok.hpCur!=null?tok.hpCur:tok.hpMax||0)+delta;
+  const clamped=Math.max(0,Math.min(tok.hpMax||9999,cur));
+  tokRef.child(tokId).update({hpCur:clamped});
+  // Update modal inputs if open
+  const el=document.getElementById('hp-cur');if(el)el.value=clamped;
+}
+
+// ── STATUS EFFECTS ────────────────────────────────────────
+const PRESET_STATUSES=[
+  {icon:'☠',label:'Poisoned'},{icon:'⚡',label:'Stunned'},{icon:'🔥',label:'Burning'},
+  {icon:'❄',label:'Frozen'},{icon:'👁',label:'Invisible'},{icon:'🩸',label:'Bleeding'},
+  {icon:'✨',label:'Blessed'},{icon:'💀',label:'Cursed'},{icon:'⬇',label:'Prone'},
+  {icon:'🎯',label:'Concentrating'},{icon:'🛡',label:'Shielded'},{icon:'😴',label:'Asleep'},
+  {icon:'😵',label:'Incapacitated'},{icon:'🌀',label:'Confused'},{icon:'⚔',label:'Raging'},
+];
+function openStatusModal(tok){
+  const cur=tok.statuses||[];
+  const presets=PRESET_STATUSES.map(s=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:18px;width:28px;text-align:center">${s.icon}</span>
+      <span style="flex:1;font-size:13px">${s.label}</span>
+      <input type="number" id="st-rnd-${s.label.replace(/\s/g,'')}" placeholder="rds" min="0" max="99" style="width:52px;background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:3px 6px;font-size:13px;outline:none"/>
+      <button class="tb-btn" onclick="addStatus('${tok.id}','${s.icon}','${s.label}',document.getElementById('st-rnd-${s.label.replace(/\s/g,'')}').value)">ADD</button>
+    </div>`).join('');
+  const curList=cur.length?`<div class="mlabel" style="margin-top:8px">Active statuses</div>`+cur.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+      <span style="font-size:16px">${s.icon}</span>
+      <span style="flex:1;font-size:13px">${s.label}${s.rounds!=null?' ('+s.rounds+' rds)':''}</span>
+      <button class="tb-btn danger" style="font-size:9px" onclick="removeStatus('${tok.id}',${i})">✕</button>
+    </div>`).join(''):'';
+  const customRow=`
+    <div class="mlabel" style="margin-top:8px">Custom status</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <input class="fi" id="cust-icon" type="text" placeholder="emoji" maxlength="2" style="width:52px"/>
+      <input class="fi" id="cust-label" type="text" placeholder="Name" style="flex:1"/>
+      <input type="number" id="cust-rnd" placeholder="rds" min="0" max="99" style="width:52px;background:var(--bg-deep);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:8px 6px;font-size:14px;outline:none"/>
+      <button class="tb-btn" onclick="addCustomStatus('${tok.id}')">ADD</button>
+    </div>`;
+  showModal(`
+    <div class="modal-title">STATUS — ${tok.name}</div>
+    ${curList}
+    <div class="mlabel">Add status</div>
+    <div style="max-height:240px;overflow-y:auto">${presets}</div>
+    ${customRow}
+  `,[{label:'DONE',primary:true,fn:closeModal}]);
+}
+function addStatus(tokId,icon,label,rounds){
+  const tok=tokens[tokId];if(!tok)return;
+  const cur=tok.statuses?[...tok.statuses]:[];
+  const rnd=parseInt(rounds);
+  cur.push({icon,label,rounds:isNaN(rnd)||rnd<=0?null:rnd});
+  tokRef.child(tokId).update({statuses:cur});
+}
+function addCustomStatus(tokId){
+  const icon=(document.getElementById('cust-icon')?.value||'❓').trim()||'❓';
+  const label=(document.getElementById('cust-label')?.value||'Custom').trim()||'Custom';
+  const rounds=parseInt(document.getElementById('cust-rnd')?.value);
+  addStatus(tokId,icon,label,isNaN(rounds)?null:rounds);
+  closeModal();
+}
+function removeStatus(tokId,idx){
+  const tok=tokens[tokId];if(!tok||!tok.statuses)return;
+  const cur=[...tok.statuses];cur.splice(idx,1);
+  tokRef.child(tokId).update({statuses:cur});
+  closeModal();
+}
+
+// Tick down status round counters when next turn fires
+function tickStatusCounters(){
+  const cur=initState.order[initState.currentIdx||0];
+  if(!cur||!cur.tokId)return;
+  const tok=tokens[cur.tokId];
+  if(!tok||!tok.statuses)return;
+  const updated=tok.statuses.map(s=>{
+    if(s.rounds==null)return s;
+    return{...s,rounds:s.rounds-1};
+  }).filter(s=>s.rounds==null||s.rounds>0);
+  tokRef.child(cur.tokId).update({statuses:updated});
+}
+
+// ── AURAS ─────────────────────────────────────────────────
+function openAuraModal(tok){
+  const cur=tok.auras||[];
+  const curList=cur.length?cur.map((a,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+      <div style="width:14px;height:14px;border-radius:50%;background:${a.color};flex-shrink:0"></div>
+      <span style="flex:1;font-size:13px">${a.radiusFt}ft ${a.label||''}</span>
+      <button class="tb-btn danger" style="font-size:9px" onclick="removeAura('${tok.id}',${i})">✕</button>
+    </div>`).join(''):'';
+  showModal(`
+    <div class="modal-title">AURAS — ${tok.name}</div>
+    ${curList?'<div class="mlabel">Active auras</div>'+curList:''}
+    <div class="mlabel">Add aura</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input class="fi" id="aura-ft" type="number" placeholder="Radius ft" min="5" max="500" style="width:100px"/>
+      <input type="color" id="aura-col" value="#4cb8c9"/>
+    </div>
+    <input class="fi" id="aura-label" type="text" placeholder="Label (optional) e.g. Detect Evil"/>
+  `,[
+    {label:'CANCEL',fn:closeModal},
+    {label:'ADD AURA',primary:true,fn:()=>{
+      const ft=parseInt(document.getElementById('aura-ft')?.value)||10;
+      const col=document.getElementById('aura-col')?.value||'#4cb8c9';
+      const lbl=(document.getElementById('aura-label')?.value||'').trim();
+      const cur=tokens[tok.id]?.auras?[...tokens[tok.id].auras]:[];
+      cur.push({radiusFt:ft,color:col,label:lbl});
+      tokRef.child(tok.id).update({auras:cur});closeModal();
+    }}
+  ]);
+}
+function removeAura(tokId,idx){
+  const tok=tokens[tokId];if(!tok||!tok.auras)return;
+  const cur=[...tok.auras];cur.splice(idx,1);
+  tokRef.child(tokId).update({auras:cur});closeModal();
+}
+
+// ── TURN TIMER ────────────────────────────────────────────
+function startTurnTimer(seconds){
+  stopTurnTimer();
+  timerSeconds=seconds;
+  const el=document.getElementById('turn-timer');
+  if(!el)return;
+  el.style.display='block';
+  el.textContent=timerSeconds;
+  el.classList.remove('urgent');
+  timerInterval=setInterval(()=>{
+    timerSeconds--;
+    el.textContent=timerSeconds;
+    if(timerSeconds<=10)el.classList.add('urgent');
+    if(timerSeconds<=0){stopTurnTimer();}
+  },1000);
+}
+function stopTurnTimer(){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  const el=document.getElementById('turn-timer');
+  if(el){el.style.display='none';el.classList.remove('urgent');}
+}
+
+// ── CHAT (new system) ─────────────────────────────────────
+// Data structure:
+//   rooms/roomId/chat/public/{msgId}  — public messages
+//   rooms/roomId/chat/dm/{playerId}/{msgId} — DM thread between player and GM
+
+let pubChatRef=null,dmChatRef=null;
+let gmChatTab='public';   // 'public'|'dm'
+let plChatTab='public';   // 'public'|'dm'
+let openDmPlayerId=null;  // which player's DM convo is open (GM only)
+let openDmPlayerName='';
+let lastPubTime=0,lastDmTime={};
+let connectedPlayers={};  // {uid:{name,lastSeen}} tracked via presence
+
+function initChat(){
+  if(!chatRef)return;
+  pubChatRef=chatRef.child('public');
+  dmChatRef=chatRef.child('dm');
+
+  // Show correct chat panel
+  if(myRole==='gm'){
+    document.getElementById('gm-chat').style.display='flex';
+  } else if(myRole==='player'){
+    document.getElementById('player-chat').style.display='flex';
+    // My DM thread with GM
+    dmChatRef.child(myId).limitToLast(80).on('value',s=>{
+      renderPlDm(s.val()||{});
+    });
+  }
+  // Public chat — visible to GM and players (not observer)
+  if(myRole!=='observer'){
+    pubChatRef.limitToLast(100).on('value',s=>{
+      renderPublicChat(s.val()||{});
+    });
+  }
+  // GM watches all DM threads
+  if(myRole==='gm'){
+    dmChatRef.on('value',s=>{
+      const all=s.val()||{};
+      updateDmPlayerList(all);
+      // If a convo is open, refresh it
+      if(openDmPlayerId&&all[openDmPlayerId]){
+        renderGmDmConvo(all[openDmPlayerId]);
+      }
+    });
+    // Track connected players via presence node
+    db.ref('rooms/'+roomId+'/presence').on('value',s=>{
+      connectedPlayers=s.val()||{};
+      // Rebuild DM list
+      dmChatRef.once('value',snap=>updateDmPlayerList(snap.val()||{}));
+    });
+  }
+  // Presence registration is handled in connectDB for all roles
+}
+
+// ── PUBLIC CHAT ───────────────────────────────────────────
+function renderPublicChat(msgs){
+  const isGm=myRole==='gm';
+  const list=document.getElementById(isGm?'gm-pub-msgs':'pl-pub-msgs');
+  if(!list)return;
+  const keys=Object.keys(msgs).sort();
+  const wasBottom=list.scrollHeight-list.scrollTop<=list.clientHeight+20;
+  list.innerHTML='';
+  let newCount=0;
+  keys.forEach(k=>{
+    const m=msgs[k];
+    const isMe=m.fromId===myId;
+    const div=document.createElement('div');
+    div.className='cmsg '+(isMe?'mine':'theirs');
+    div.innerHTML='<span class="cm-who">'+m.from+'</span>'+escHtml(m.text);
+    list.appendChild(div);
+    if(!isMe&&m.t>lastPubTime)newCount++;
+  });
+  if(wasBottom)list.scrollTop=list.scrollHeight;
+  lastPubTime=Date.now();
+  if(newCount>0){
+    const activeTab=isGm?gmChatTab:plChatTab;
+    if(activeTab!=='public'){
+      const badge=document.getElementById(isGm?'gm-pub-badge':'pl-pub-badge');
+      if(badge){badge.textContent=newCount;badge.style.display='inline';}
+    }
+  }
+}
+
+function gmSendPublic(){
+  const inp=document.getElementById('gm-pub-input');
+  const text=(inp?.value||'').trim();if(!text)return;
+  pubChatRef.push({from:myName,fromId:myId,role:'gm',text,t:Date.now()});
+  inp.value='';
+}
+function plSendPublic(){
+  const inp=document.getElementById('pl-pub-input');
+  const text=(inp?.value||'').trim();if(!text)return;
+  pubChatRef.push({from:myName,fromId:myId,role:'player',text,t:Date.now()});
+  inp.value='';
+}
+
+// ── DM: GM SIDE ───────────────────────────────────────────
+function updateDmPlayerList(allDms){
+  const list=document.getElementById('dm-player-list');
+  if(!list)return;
+  // Merge presence + anyone who has sent a DM
+  const playerMap={};
+  Object.entries(connectedPlayers).forEach(([uid,p])=>{
+    if(p.role==='player')playerMap[uid]={name:p.name,msgs:{}};
+  });
+  Object.entries(allDms).forEach(([uid,msgs])=>{
+    if(!playerMap[uid]){
+      // Get name from first message
+      const firstMsg=Object.values(msgs||{})[0];
+      if(firstMsg)playerMap[uid]={name:firstMsg.from,msgs};
+    } else {
+      playerMap[uid].msgs=msgs||{};
+    }
+  });
+  if(!Object.keys(playerMap).length){
+    list.innerHTML='<div class="empty-msg" style="font-size:11px">No players connected yet</div>';
+    return;
+  }
+  list.innerHTML='';
+  Object.entries(playerMap).forEach(([uid,p])=>{
+    const msgs=p.msgs||{};
+    const lastTime=lastDmTime[uid]||0;
+    const hasNew=Object.values(msgs).some(m=>m.fromId!==myId&&m.t>lastTime);
+    const row=document.createElement('div');row.className='dm-player-row';
+    row.innerHTML=`
+      <div class="dm-player-av">${(p.name||'?').slice(0,1).toUpperCase()}</div>
+      <span class="dm-player-name">${p.name}</span>
+      <span class="dm-player-badge" id="dm-badge-${uid}" style="display:${hasNew?'inline':'none'}">&#128172;</span>`;
+    row.onclick=()=>openDmConvo(uid,p.name,msgs);
+    list.appendChild(row);
+  });
+  // Update overall DM tab badge
+  const anyNew=Object.keys(playerMap).some(uid=>{
+    const msgs=playerMap[uid].msgs||{};
+    const lastTime=lastDmTime[uid]||0;
+    return Object.values(msgs).some(m=>m.fromId!==myId&&m.t>lastTime);
+  });
+  const dmBadge=document.getElementById('gm-dm-badge');
+  if(dmBadge)dmBadge.style.display=anyNew?'inline':'none';
+}
+
+function openDmConvo(uid,name,msgs){
+  openDmPlayerId=uid;openDmPlayerName=name;
+  lastDmTime[uid]=Date.now();
+  const convo=document.getElementById('dm-convo');
+  const nameEl=document.getElementById('dm-convo-name');
+  if(nameEl)nameEl.textContent='DM: '+name;
+  if(convo)convo.style.display='flex';
+  renderGmDmConvo(msgs);
+  // Clear badge
+  const badge=document.getElementById('dm-badge-'+uid);
+  if(badge)badge.style.display='none';
+  const dmBadge=document.getElementById('gm-dm-badge');
+  if(dmBadge)dmBadge.style.display='none';
+  setTimeout(()=>{const inp=document.getElementById('dm-convo-input');if(inp)inp.focus();},50);
+}
+
+function renderGmDmConvo(msgs){
+  const list=document.getElementById('dm-convo-msgs');
+  if(!list)return;
+  const keys=Object.keys(msgs).sort();
+  const wasBottom=list.scrollHeight-list.scrollTop<=list.clientHeight+20;
+  list.innerHTML='';
+  keys.forEach(k=>{
+    const m=msgs[k];
+    const isMe=m.fromId===myId;
+    const div=document.createElement('div');
+    div.className='cmsg '+(isMe?'mine':'theirs');
+    div.innerHTML='<span class="cm-who">'+m.from+'</span>'+escHtml(m.text);
+    list.appendChild(div);
+  });
+  if(wasBottom)list.scrollTop=list.scrollHeight;
+}
+
+function gmSendDm(){
+  const inp=document.getElementById('dm-convo-input');
+  const text=(inp?.value||'').trim();
+  if(!text||!openDmPlayerId)return;
+  dmChatRef.child(openDmPlayerId).push({from:myName,fromId:myId,role:'gm',text,t:Date.now()});
+  inp.value='';
+}
+
+function closeDmConvo(){
+  const convo=document.getElementById('dm-convo');
+  if(convo)convo.style.display='none';
+  openDmPlayerId=null;openDmPlayerName='';
+}
+
+// ── DM: PLAYER SIDE ───────────────────────────────────────
+function renderPlDm(msgs){
+  const list=document.getElementById('pl-dm-msgs');
+  if(!list)return;
+  const keys=Object.keys(msgs).sort();
+  const wasBottom=list.scrollHeight-list.scrollTop<=list.clientHeight+20;
+  list.innerHTML='';
+  let newCount=0;
+  keys.forEach(k=>{
+    const m=msgs[k];
+    const isMe=m.fromId===myId;
+    const div=document.createElement('div');
+    div.className='cmsg '+(isMe?'mine':'theirs');
+    div.innerHTML='<span class="cm-who">'+m.from+'</span>'+escHtml(m.text);
+    list.appendChild(div);
+    if(!isMe&&m.t>lastDmTime['gm-thread'])newCount++;
+  });
+  if(wasBottom)list.scrollTop=list.scrollHeight;
+  lastDmTime['gm-thread']=Date.now();
+  if(newCount>0&&plChatTab!=='dm'){
+    const badge=document.getElementById('pl-dm-badge');
+    if(badge){badge.textContent=newCount;badge.style.display='inline';}
+  }
+  if(plChatTab==='dm'){
+    const badge=document.getElementById('pl-dm-badge');
+    if(badge)badge.style.display='none';
+  }
+}
+
+function plSendDm(){
+  const inp=document.getElementById('pl-dm-input');
+  const text=(inp?.value||'').trim();if(!text)return;
+  // Player sends to their own DM thread (GM reads from dmChatRef/uid)
+  dmChatRef.child(myId).push({from:myName,fromId:myId,role:'player',text,t:Date.now()});
+  inp.value='';
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────
+function gmSwitchTab(tab){
+  gmChatTab=tab;
+  document.getElementById('gm-tab-pub').classList.toggle('active',tab==='public');
+  document.getElementById('gm-tab-dm').classList.toggle('active',tab==='dm');
+  document.getElementById('gm-public-pane').style.display=tab==='public'?'flex':'none';
+  document.getElementById('gm-dm-pane').style.display=tab==='dm'?'flex':'none';
+  if(tab==='public'){const b=document.getElementById('gm-pub-badge');if(b)b.style.display='none';}
+  if(tab==='dm'){const b=document.getElementById('gm-dm-badge');if(b)b.style.display='none';}
+}
+function plSwitchTab(tab){
+  plChatTab=tab;
+  document.getElementById('pl-tab-pub').classList.toggle('active',tab==='public');
+  document.getElementById('pl-tab-dm').classList.toggle('active',tab==='dm');
+  document.getElementById('pl-public-pane').style.display=tab==='public'?'flex':'none';
+  document.getElementById('pl-dm-pane').style.display=tab==='dm'?'flex':'none';
+  if(tab==='dm'){const b=document.getElementById('pl-dm-badge');if(b)b.style.display='none';}
+}
+
+function escHtml(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// Enter key support for all chat inputs
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  const id=document.activeElement?.id;
+  if(id==='gm-pub-input')gmSendPublic();
+  else if(id==='pl-pub-input')plSendPublic();
+  else if(id==='dm-convo-input')gmSendDm();
+  else if(id==='pl-dm-input')plSendDm();
+});
+
+// Firebase Auth state — drives which screen is shown
+firebase.auth().onAuthStateChanged(user=>{
+  if(user&&user.displayName){
+    // Signed in and profile complete — go to room screen (or stay in app)
+    if(document.getElementById('app').style.display==='flex'){
+      currentUser=user;myId=user.uid;myName=user.displayName;
+    } else {
+      showRoomScreen(user);
+    }
+  } else {
+    // Not signed in — always show auth screen, reset any green success message
+    document.getElementById('app').style.display='none';
+    document.getElementById('room-screen').style.display='none';
+    document.getElementById('auth-screen').style.display='flex';
+    const err=document.getElementById('auth-err');
+    if(err&&err.style.color==='var(--green)'){}// keep success message
+  }
+});
+
+// Allow pressing Enter to submit auth forms
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doSignIn()});
+  document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter')doSignIn()});
+  document.getElementById('reg-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister()});
+  document.getElementById('join-room-code')?.addEventListener('keydown',e=>{if(e.key==='Enter')doJoinRoom()});
+  document.getElementById('create-room-code')?.addEventListener('keydown',e=>{if(e.key==='Enter')doCreateRoom()});
+  document.getElementById('create-gm-code')?.addEventListener('keydown',e=>{if(e.key==='Enter')doCreateRoom()});
+  // Init auth tab layout
+  showAuthTab('login');
+});
+
+// ── SIDEBAR TOGGLE (mobile) ────────────────────────────────
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const btn=document.getElementById('sidebar-toggle');
+  const collapsed=sb.classList.toggle('collapsed');
+  btn.innerHTML=collapsed?'&#9666;':'&#9656;';
+  btn.title=collapsed?'Show sidebar':'Hide sidebar';
+  setTimeout(resize,260);
+}
+</script>
+</body>
+</html>
